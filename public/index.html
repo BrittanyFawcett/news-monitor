@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MarketPulse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="layout">
+
+    <!-- ── Sidebar ─────────────────────────────────────────────────── -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <rect width="28" height="28" rx="8" fill="#2563EB"/>
+            <polyline points="5,18 10,11 15,15 22,7" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <circle cx="22" cy="7" r="2" fill="white"/>
+          </svg>
+          <div class="logo-text">
+            <div class="logo-title">MarketPulse</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-search">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" id="search-input" placeholder="Search articles…" autocomplete="off">
+      </div>
+
+      <nav class="sidebar-nav">
+
+        <!-- ── Industry (dots kept) ───────────────────────────────── -->
+        <div class="nav-section">
+          <div class="nav-section-title">
+            Industry
+            <button class="select-all-btn" id="industry-select-all" data-section="industry">Deselect All</button>
+          </div>
+          <button class="filter-btn active" data-group="industry" data-value="big_tech_fintech">
+            <span class="dot dot-big_tech_fintech"></span>
+            <span class="filter-label">Big Tech</span>
+            <span class="filter-count" id="cnt-big_tech_fintech">—</span>
+          </button>
+          <button class="filter-btn active" data-group="industry" data-value="card_networks">
+            <span class="dot dot-card_networks"></span>
+            <span class="filter-label">Card Networks</span>
+            <span class="filter-count" id="cnt-card_networks">—</span>
+          </button>
+          <button class="filter-btn active" data-group="industry" data-value="payments">
+            <span class="dot dot-payments"></span>
+            <span class="filter-label">Payments</span>
+            <span class="filter-count" id="cnt-payments">—</span>
+          </button>
+          <button class="filter-btn active" data-group="industry" data-value="commerce">
+            <span class="dot dot-commerce"></span>
+            <span class="filter-label">Commerce &amp; Embedded</span>
+            <span class="filter-count" id="cnt-commerce">—</span>
+          </button>
+          <button class="filter-btn active" data-group="industry" data-value="bnpl">
+            <span class="dot dot-bnpl"></span>
+            <span class="filter-label">Buy Now Pay Later</span>
+            <span class="filter-count" id="cnt-bnpl">—</span>
+          </button>
+          <button class="filter-btn active" data-group="industry" data-value="neobanks">
+            <span class="dot dot-neobanks"></span>
+            <span class="filter-label">Neobanks</span>
+            <span class="filter-count" id="cnt-neobanks">—</span>
+          </button>
+          <button class="filter-btn active" data-group="industry" data-value="brokerage">
+            <span class="dot dot-brokerage"></span>
+            <span class="filter-label">Brokerage &amp; Asset Mgmt</span>
+            <span class="filter-count" id="cnt-brokerage">—</span>
+          </button>
+          <button class="filter-btn active" data-group="industry" data-value="mortgage_lending">
+            <span class="dot dot-mortgage_lending"></span>
+            <span class="filter-label">Mortgage &amp; Lending</span>
+            <span class="filter-count" id="cnt-mortgage_lending">—</span>
+          </button>
+          <button class="filter-btn active" data-group="industry" data-value="crypto">
+            <span class="dot dot-crypto"></span>
+            <span class="filter-label">Crypto</span>
+            <span class="filter-count" id="cnt-crypto">—</span>
+          </button>
+          <button class="filter-btn active" data-group="industry" data-value="open_banking">
+            <span class="dot dot-open_banking"></span>
+            <span class="filter-label">Data &amp; Open Banking</span>
+            <span class="filter-count" id="cnt-open_banking">—</span>
+          </button>
+        </div>
+
+        <!-- ── Event Type (no dots) ───────────────────────────────── -->
+        <div class="nav-section">
+          <div class="nav-section-title">
+            Event Type
+            <button class="select-all-btn" id="eventtype-select-all" data-section="event_type">Select All</button>
+          </div>
+          <button class="filter-btn" data-group="event_type" data-value="ma_fundraising">
+            <span class="filter-label">M&amp;A / Fundraising</span>
+            <span class="filter-count" id="cnt-ma_fundraising">—</span>
+          </button>
+          <button class="filter-btn" data-group="event_type" data-value="earnings">
+            <span class="filter-label">Earnings</span>
+            <span class="filter-count" id="cnt-earnings">—</span>
+          </button>
+          <button class="filter-btn" data-group="event_type" data-value="partnerships">
+            <span class="filter-label">Partnerships</span>
+            <span class="filter-count" id="cnt-partnerships">—</span>
+          </button>
+          <button class="filter-btn" data-group="event_type" data-value="product_launch">
+            <span class="filter-label">Product Launch</span>
+            <span class="filter-count" id="cnt-product_launch">—</span>
+          </button>
+          <button class="filter-btn" data-group="event_type" data-value="leadership">
+            <span class="filter-label">Leadership</span>
+            <span class="filter-count" id="cnt-leadership">—</span>
+          </button>
+          <button class="filter-btn" data-group="event_type" data-value="regulatory">
+            <span class="filter-label">Regulatory</span>
+            <span class="filter-count" id="cnt-regulatory">—</span>
+          </button>
+          <button class="filter-btn" data-group="event_type" data-value="industry_news">
+            <span class="filter-label">Industry News</span>
+            <span class="filter-count" id="cnt-industry_news">—</span>
+          </button>
+        </div>
+
+        <!-- ── Companies ──────────────────────────────────────────── -->
+        <div class="nav-section">
+          <div class="nav-section-title companies-title">
+            <button class="section-collapse-btn" id="companies-toggle">
+              Companies
+              <svg class="collapse-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <button class="company-clear-btn hidden" id="company-clear-btn" title="Clear">
+              <span id="company-clear-label"></span>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div id="company-filter" class="company-filter-panel" style="display:none"></div>
+        </div>
+
+        <!-- ── Source Type (no dots) ──────────────────────────────── -->
+        <div class="nav-section">
+          <div class="nav-section-title">Source Type</div>
+          <button class="filter-btn active" data-group="source_type" data-value="news">
+            <span class="filter-label">News API</span>
+            <span class="filter-count" id="cnt-news">—</span>
+          </button>
+          <button class="filter-btn active" data-group="source_type" data-value="rss">
+            <span class="filter-label">RSS Feeds</span>
+            <span class="filter-count" id="cnt-rss">—</span>
+          </button>
+          <button class="filter-btn active" data-group="source_type" data-value="filing">
+            <span class="filter-label">SEC Filings</span>
+            <span class="filter-count" id="cnt-filing">—</span>
+          </button>
+          <button class="filter-btn active" data-group="source_type" data-value="press_release">
+            <span class="filter-label">Press Releases</span>
+            <span class="filter-count" id="cnt-press_release">—</span>
+          </button>
+        </div>
+
+        <!-- ── Date Range ──────────────────────────────────────────── -->
+        <div class="nav-section">
+          <div class="nav-section-title">Date Range</div>
+          <div class="date-presets">
+            <button class="preset-btn" data-preset="1d">Today</button>
+            <button class="preset-btn" data-preset="3d">3d</button>
+            <button class="preset-btn active" data-preset="7d">7d</button>
+            <button class="preset-btn" data-preset="30d">30d</button>
+            <button class="preset-btn" data-preset="1y">1y</button>
+            <button class="preset-btn" data-preset="all">All</button>
+          </div>
+        </div>
+
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="fetch-btn" id="fetch-btn">
+          <svg class="fetch-icon" id="fetch-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+          </svg>
+          <span id="fetch-text">Fetch Latest</span>
+        </button>
+        <div class="sidebar-stats">
+          <div class="stat">
+            <span class="stat-value" id="total-count">—</span>
+            <span class="stat-label">articles</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-value" id="last-fetched">—</span>
+            <span class="stat-label">last fetch</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Main Content ──────────────────────────────────────────── -->
+    <main class="main">
+
+      <div class="main-header">
+        <div>
+          <h1 class="result-title">
+            <span id="result-count">—</span>
+            <span class="result-label">articles</span>
+          </h1>
+          <p class="result-subtitle" id="filter-summary">Loading…</p>
+        </div>
+      </div>
+
+      <div id="fetch-notice" class="fetch-notice hidden">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+        </svg>
+        Fetching latest articles — new results will appear shortly.
+      </div>
+
+      <div id="feed-content"></div>
+
+      <div id="loading-spinner" class="loading-spinner hidden">
+        <div class="spinner"></div>
+      </div>
+
+      <div id="empty-state" class="empty-state hidden">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.15">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <h3>No articles found</h3>
+        <p id="empty-message">Adjust your filters or fetch the latest articles.</p>
+        <button class="btn-primary" id="empty-fetch-btn">Fetch Articles</button>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

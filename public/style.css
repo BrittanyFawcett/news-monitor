@@ -1,0 +1,605 @@
+/* ── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sidebar-w: 256px;
+
+  /* Light palette */
+  --sidebar-bg:          #ffffff;
+  --sidebar-border:      #dde1e7;
+  --sidebar-hover:       rgba(0,0,0,0.03);
+  --text-sidebar:        #1a1a2e;
+  --text-sidebar-active: #1a1a2e;
+
+  /* Main */
+  --accent:       #003087;
+  --accent-hover: #002070;
+  --main-bg:      #f4f5f7;
+  --card-bg:      #ffffff;
+  --border:       #dde1e7;
+  --border-light: #e8eaed;
+  --text-primary:   #1a1a2e;
+  --text-secondary: #444455;
+  --text-muted:     #6a6a7a;
+  --text-dim:       #666677;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --radius: 4px;
+
+  /* Industry accent colors */
+  --c-big_tech_fintech: #003087;
+  --c-card_networks:    #4a0080;
+  --c-payments:         #005a00;
+  --c-commerce:         #006060;
+  --c-bnpl:             #800060;
+  --c-neobanks:         #005050;
+  --c-brokerage:        #6b4800;
+  --c-mortgage_lending: #6b2800;
+  --c-crypto:           #2d006b;
+  --c-open_banking:     #303045;
+
+  /* Breaking */
+  --breaking-border: #b0003a;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  background: var(--main-bg);
+  color: var(--text-primary);
+  line-height: 1.5;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Layout ───────────────────────────────────────────────────── */
+.layout { display: flex; min-height: 100vh; }
+
+/* ── Sidebar ──────────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--sidebar-border);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-header {
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--sidebar-border);
+  flex-shrink: 0;
+}
+
+.logo { display: flex; align-items: center; gap: 9px; }
+.logo-text { line-height: 1.2; }
+.logo-title  { font-size: 14px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.01em; }
+.logo-subtitle { font-size: 9.5px; color: #6a6a7a; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-top: 1px; }
+
+/* Search */
+.sidebar-search { position: relative; padding: 9px 10px 6px; flex-shrink: 0; }
+
+.search-icon {
+  position: absolute; left: 20px; top: 50%;
+  transform: translateY(-50%); color: #6a6a7a; pointer-events: none;
+}
+
+#search-input {
+  width: 100%;
+  background: #f4f5f7;
+  border: 1px solid #dde1e7;
+  border-radius: var(--radius);
+  padding: 6px 10px 6px 30px;
+  color: #1a1a2e;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+#search-input::placeholder { color: #6a6a7a; }
+#search-input:focus { border-color: #aab0c0; background: #eef0f4; }
+
+/* Nav */
+.sidebar-nav  { flex: 1; padding: 2px 0 8px; }
+.nav-section  { padding: 2px 0; }
+
+.nav-section-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #6a6a7a;
+  padding: 10px 14px 3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Filter buttons */
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 14px;
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11.5px;
+  color: var(--text-sidebar);
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  text-align: left;
+}
+.filter-btn:hover  { background: var(--sidebar-hover); color: var(--text-sidebar-active); }
+.filter-btn.active { color: var(--text-sidebar-active); background: rgba(0,0,0,0.04); border-left-color: #c8ccd4; }
+
+/* Per-industry active border colors */
+.filter-btn[data-value="big_tech_fintech"].active { border-left-color: var(--c-big_tech_fintech); }
+.filter-btn[data-value="card_networks"].active    { border-left-color: var(--c-card_networks); }
+.filter-btn[data-value="payments"].active         { border-left-color: var(--c-payments); }
+.filter-btn[data-value="commerce"].active         { border-left-color: var(--c-commerce); }
+.filter-btn[data-value="bnpl"].active             { border-left-color: var(--c-bnpl); }
+.filter-btn[data-value="neobanks"].active         { border-left-color: var(--c-neobanks); }
+.filter-btn[data-value="brokerage"].active        { border-left-color: var(--c-brokerage); }
+.filter-btn[data-value="mortgage_lending"].active { border-left-color: var(--c-mortgage_lending); }
+.filter-btn[data-value="crypto"].active           { border-left-color: var(--c-crypto); }
+.filter-btn[data-value="open_banking"].active     { border-left-color: var(--c-open_banking); }
+
+.filter-label { flex: 1; }
+.filter-count { font-size: 10px; font-weight: 700; color: #6a6a7a; min-width: 20px; text-align: right; }
+.filter-btn.active .filter-count { color: #666677; }
+
+/* Dots — industry section only */
+.dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  flex-shrink: 0; opacity: 0.35; transition: opacity 0.1s;
+}
+.filter-btn.active .dot { opacity: 1; }
+
+.dot-big_tech_fintech { background: var(--c-big_tech_fintech); }
+.dot-card_networks    { background: var(--c-card_networks); }
+.dot-payments         { background: var(--c-payments); }
+.dot-commerce         { background: var(--c-commerce); }
+.dot-bnpl             { background: var(--c-bnpl); }
+.dot-neobanks         { background: var(--c-neobanks); }
+.dot-brokerage        { background: var(--c-brokerage); }
+.dot-mortgage_lending { background: var(--c-mortgage_lending); }
+.dot-crypto           { background: var(--c-crypto); }
+.dot-open_banking     { background: var(--c-open_banking); }
+
+/* ── Select All button ────────────────────────────────────────── */
+.select-all-btn {
+  background: none; border: none;
+  color: #6a6a7a; font-size: 9px; font-weight: 700;
+  font-family: inherit; cursor: pointer;
+  padding: 1px 5px; border-radius: 3px;
+  transition: color 0.1s;
+  white-space: nowrap; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.select-all-btn:hover { color: #444455; }
+
+/* ── Companies collapse toggle ────────────────────────────────── */
+.companies-title { cursor: default; gap: 6px; }
+
+.section-collapse-btn {
+  background: none; border: none; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  color: #6a6a7a; font-size: 9px; font-weight: 700;
+  font-family: inherit; text-transform: uppercase; letter-spacing: 0.12em;
+  padding: 0; transition: color 0.1s; flex: 1;
+}
+.section-collapse-btn:hover { color: #444455; }
+
+.collapse-arrow { transition: transform 0.2s ease; color: #6a6a7a; flex-shrink: 0; }
+.section-collapse-btn.expanded .collapse-arrow { transform: rotate(180deg); }
+
+/* Company clear button */
+.company-clear-btn {
+  display: flex; align-items: center; gap: 4px;
+  background: #f4f5f7; border: 1px solid #dde1e7; border-radius: 20px;
+  color: #444455; font-size: 10px; font-weight: 600; padding: 2px 7px 2px 8px;
+  cursor: pointer; transition: background 0.1s; white-space: nowrap; max-width: 110px; overflow: hidden;
+  flex-shrink: 0;
+}
+.company-clear-btn:hover { background: #eaecf0; }
+.company-clear-btn span:first-child { overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Company picker ───────────────────────────────────────────── */
+.company-filter-panel { padding: 2px 10px 8px; }
+.company-group { margin-bottom: 8px; }
+
+.company-group-label {
+  font-size: 9px; font-weight: 700; color: #6a6a7a;
+  text-transform: uppercase; letter-spacing: 0.09em; padding: 2px 4px 4px;
+}
+
+.company-chips { display: flex; flex-wrap: wrap; gap: 3px; }
+
+.company-chip {
+  padding: 2px 7px;
+  background: #f4f5f7;
+  border: 1px solid #dde1e7;
+  border-radius: 3px;
+  color: #666677; font-size: 10.5px; font-family: inherit;
+  font-weight: 500; cursor: pointer; transition: all 0.1s; white-space: nowrap;
+}
+.company-chip:hover  { background: #eaecf0; color: #444455; border-color: #c8ccd4; }
+.company-chip.active { background: #e8ecf4; border-color: #a0aac8; color: #1a1a2e; }
+
+/* ── Date presets — compact pills ─────────────────────────────── */
+.date-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 3px 10px 8px;
+}
+
+.preset-btn {
+  padding: 3px 9px;
+  background: #f4f5f7;
+  border: 1px solid #dde1e7;
+  border-radius: 12px;
+  color: #666677;
+  font-size: 10px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.1s;
+  white-space: nowrap;
+}
+.preset-btn:hover  { background: #eaecf0; color: #444455; }
+.preset-btn.active { background: #003087; border-color: #003087; color: #ffffff; }
+
+/* Sidebar footer */
+.sidebar-footer { padding: 10px; border-top: 1px solid var(--sidebar-border); flex-shrink: 0; }
+
+.fetch-btn {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; padding: 8px 14px;
+  background: var(--accent); color: white; border: none; border-radius: var(--radius);
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;
+  letter-spacing: 0.02em; transition: background 0.15s;
+}
+.fetch-btn:hover   { background: var(--accent-hover); }
+.fetch-btn:active  { opacity: 0.88; }
+.fetch-btn:disabled { background: #c8d0e0; cursor: not-allowed; opacity: 0.8; }
+.fetch-icon.spinning { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.sidebar-stats { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 9px; }
+.stat { text-align: center; }
+.stat-value { display: block; font-size: 13px; font-weight: 700; color: #1a1a2e; letter-spacing: -0.01em; }
+.stat-label { font-size: 9px; color: #6a6a7a; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
+.stat-divider { width: 1px; height: 24px; background: var(--sidebar-border); }
+
+/* ── Main Content ─────────────────────────────────────────────── */
+.main { margin-left: var(--sidebar-w); flex: 1; padding: 22px 28px 40px; min-height: 100vh; }
+
+.main-header { margin-bottom: 18px; }
+
+.result-title {
+  font-size: 20px; font-weight: 800; color: #1a1a2e;
+  letter-spacing: -0.03em; display: flex; align-items: baseline; gap: 6px;
+}
+.result-label    { font-size: 14px; font-weight: 400; color: var(--text-muted); }
+.result-subtitle { margin-top: 2px; font-size: 12px; color: var(--text-muted); }
+
+.fetch-notice {
+  display: flex; align-items: center; gap: 8px;
+  background: #f4f5f7; border: 1px solid #dde1e7;
+  color: #444455; border-radius: var(--radius);
+  padding: 8px 14px; font-size: 12px; font-weight: 600; margin-bottom: 16px;
+}
+
+/* ── Breaking News ────────────────────────────────────────────── */
+.breaking-section {
+  background: #f8f0f2;
+  border: 1px solid #c08090;
+  border-top: 2px solid #b0003a;
+  border-radius: 5px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.breaking-header {
+  background: #f0e4e8;
+  padding: 8px 16px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid #c08090;
+}
+
+.breaking-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: #b0003a; color: #ffffff;
+  font-size: 10.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.12em; white-space: nowrap;
+  padding: 2px 8px; border-radius: 3px;
+}
+
+.breaking-desc { font-size: 11px; color: #b0003a; }
+
+.breaking-feed {
+  padding: 10px 12px 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+/* ── Breaking Cards ───────────────────────────────────────────── */
+.breaking-card {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #b0003a;
+  border-radius: 4px;
+  display: flex;
+  text-decoration: none; color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.breaking-card:hover { background: #fff5f7; border-color: #cc0040; }
+
+.breaking-card-body { flex: 1; padding: 10px 14px; min-width: 0; }
+
+.breaking-card-top {
+  font-size: 9.5px; font-weight: 800; color: #1a1a2e;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 5px;
+}
+
+.breaking-evt-row { margin-bottom: 5px; }
+
+.breaking-evt-tag {
+  display: inline-flex; align-items: center;
+  padding: 1px 8px; border-radius: 3px;
+  font-size: 9.5px; font-weight: 700;
+  background: #f4f5f7;
+  color: #666677;
+  border: 1px solid #dde1e7;
+}
+
+.breaking-card-divider {
+  height: 1px;
+  background: #c08090;
+  margin: 7px 0;
+}
+
+.breaking-card-title {
+  font-size: 13px; font-weight: 600; color: #1a1a2e;
+  line-height: 1.4; margin-bottom: 6px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.breaking-card-footer { font-size: 10.5px; color: #b0003a; font-weight: 500; }
+
+/* ── Industry Sections ────────────────────────────────────────── */
+.industry-section { margin-bottom: 26px; }
+
+.industry-header {
+  display: flex; align-items: center;
+  padding: 8px 14px;
+  margin-bottom: 10px;
+  border-radius: 3px;
+  background: #e8eaed;
+}
+
+/* Per-industry full background bars */
+.industry-section[data-industry="big_tech_fintech"] .industry-header { background: #003087; }
+.industry-section[data-industry="card_networks"]    .industry-header { background: #4a0080; }
+.industry-section[data-industry="payments"]         .industry-header { background: #005a00; }
+.industry-section[data-industry="commerce"]         .industry-header { background: #006060; }
+.industry-section[data-industry="bnpl"]             .industry-header { background: #800060; }
+.industry-section[data-industry="neobanks"]         .industry-header { background: #005050; }
+.industry-section[data-industry="brokerage"]        .industry-header { background: #6b4800; }
+.industry-section[data-industry="mortgage_lending"] .industry-header { background: #6b2800; }
+.industry-section[data-industry="crypto"]           .industry-header { background: #2d006b; }
+.industry-section[data-industry="open_banking"]     .industry-header { background: #303045; }
+
+.industry-title {
+  font-size: 10.5px; font-weight: 800; color: #ffffff;
+  text-transform: uppercase; letter-spacing: 1.2px; flex: 1;
+}
+
+.industry-count {
+  font-size: 10px; color: rgba(255,255,255,0.5); font-weight: 600;
+}
+
+.industry-body { display: flex; flex-direction: column; gap: 0; }
+
+/* ── Event Groups ─────────────────────────────────────────────── */
+.event-group { margin-bottom: 10px; }
+
+.event-group-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 5px; padding: 0 2px;
+}
+
+.event-group-toggle {
+  cursor: pointer;
+  user-select: none;
+  border-radius: 2px;
+  padding: 3px 4px;
+  margin: -3px -4px;
+  transition: background 0.12s;
+}
+.event-group-toggle:hover { background: rgba(0,0,0,0.04); }
+
+.event-group-arrow {
+  flex-shrink: 0;
+  color: #6a6a7a;
+  transition: transform 0.18s ease;
+}
+.event-group-toggle:hover .event-group-arrow { color: #666677; }
+.event-group.collapsed .event-group-arrow { transform: rotate(-90deg); }
+.event-group.collapsed .event-group-body  { display: none; }
+
+.event-group-label {
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.13em; color: var(--text-muted); flex: 1;
+}
+
+/* Per-industry event label color */
+.industry-section[data-industry="big_tech_fintech"] .event-group-label { color: #003087; }
+.industry-section[data-industry="card_networks"]    .event-group-label { color: #4a0080; }
+.industry-section[data-industry="payments"]         .event-group-label { color: #005a00; }
+.industry-section[data-industry="commerce"]         .event-group-label { color: #006060; }
+.industry-section[data-industry="bnpl"]             .event-group-label { color: #800060; }
+.industry-section[data-industry="neobanks"]         .event-group-label { color: #005050; }
+.industry-section[data-industry="brokerage"]        .event-group-label { color: #6b4800; }
+.industry-section[data-industry="mortgage_lending"] .event-group-label { color: #6b2800; }
+.industry-section[data-industry="crypto"]           .event-group-label { color: #2d006b; }
+.industry-section[data-industry="open_banking"]     .event-group-label { color: #303045; }
+
+
+.articles-list { display: flex; flex-direction: column; gap: 4px; }
+
+.load-section-btn {
+  display: block; width: 100%; margin-top: 4px; padding: 7px 14px;
+  background: rgba(0,0,0,0.018); border: 1px dashed #dde1e7; border-radius: var(--radius);
+  font-size: 11.5px; font-weight: 600; font-family: inherit;
+  color: var(--text-muted); cursor: pointer; transition: all 0.12s; text-align: center;
+}
+.load-section-btn:hover { background: rgba(0,0,0,0.04); border-color: #c8ccd4; color: #444455; }
+.load-section-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.section-more { margin-top: 6px; }
+
+/* ── Article Card ─────────────────────────────────────────────── */
+.article-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 0.5px solid #dde1e7;
+  padding: 8px 12px;
+  display: flex; gap: 10px; align-items: flex-start;
+  transition: border-color 0.12s, background 0.12s;
+  text-decoration: none; color: inherit;
+}
+.article-card:hover { border-color: #aab0bf; background: #f8f9fb; }
+
+.card-body { flex: 1; min-width: 0; }
+
+.card-meta {
+  display: flex; align-items: center; gap: 4px;
+  flex-wrap: wrap; margin-bottom: 4px;
+}
+
+/* ── Badges ───────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 1px 6px; border-radius: 3px;
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.03em; white-space: nowrap;
+}
+
+/* Source type badges */
+.badge-news, .badge-rss, .badge-filing, .badge-press_release {
+  background: #f4f5f7;
+  color: #666677;
+  border: 1px solid #dde1e7;
+}
+
+/* Industry badges (used in breaking section) */
+.badge-big_tech_fintech { background: rgba(0,48,135,0.08); color: #003087; }
+.badge-card_networks    { background: rgba(74,0,128,0.08); color: #4a0080; }
+.badge-payments         { background: rgba(0,90,0,0.08); color: #005a00; }
+.badge-commerce         { background: rgba(0,96,96,0.08); color: #006060; }
+.badge-bnpl             { background: rgba(128,0,96,0.08); color: #800060; }
+.badge-neobanks         { background: rgba(0,80,80,0.08); color: #005050; }
+.badge-brokerage        { background: rgba(107,72,0,0.08); color: #6b4800; }
+.badge-mortgage_lending { background: rgba(107,40,0,0.08); color: #6b2800; }
+.badge-crypto           { background: rgba(45,0,107,0.08); color: #2d006b; }
+.badge-open_banking     { background: rgba(48,48,69,0.08); color: #303045; }
+
+/* Event type badges */
+.badge-evt-ma             { background: rgba(176,0,58,0.08); color: #b0003a; }
+.badge-evt-regulatory     { background: rgba(200,100,0,0.08); color: #c86400; }
+.badge-evt-product_launch { background: rgba(0,90,0,0.08); color: #005a00; }
+.badge-evt-earnings       { background: rgba(0,48,135,0.08); color: #003087; }
+.badge-evt-leadership     { background: rgba(74,0,128,0.08); color: #4a0080; }
+.badge-evt-fundraising    { background: rgba(0,96,96,0.08); color: #006060; }
+.badge-evt-partnerships   { background: rgba(0,80,80,0.08); color: #005050; }
+
+.card-time {
+  margin-left: auto; font-size: 10.5px; color: var(--text-muted);
+  white-space: nowrap; flex-shrink: 0;
+}
+
+.card-title {
+  font-size: 12.5px; font-weight: 600; color: #1a1a2e;
+  line-height: 1.38; margin-bottom: 3px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.card-description {
+  font-size: 11.5px; color: var(--text-secondary); line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  margin-bottom: 4px;
+}
+
+/* ── Company Tags ─────────────────────────────────────────────── */
+.company-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 4px; }
+
+.company-tag {
+  display: inline-flex; align-items: center;
+  padding: 1px 6px; border-radius: 3px;
+  font-size: 10px; font-weight: 600;
+  background: #f4f5f7;
+  color: #666677;
+  border: 1px solid #dde1e7;
+  letter-spacing: 0.01em;
+}
+
+.card-footer { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+.card-source { font-weight: 600; color: var(--text-dim); }
+
+.card-image {
+  flex-shrink: 0; width: 68px; height: 50px;
+  border-radius: 3px; overflow: hidden; background: #f4f5f7; border: 1px solid #dde1e7;
+}
+.card-image img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── States ───────────────────────────────────────────────────── */
+.hidden { display: none !important; }
+
+.loading-spinner { display: flex; justify-content: center; padding: 60px; }
+
+.spinner {
+  width: 28px; height: 28px;
+  border: 2.5px solid #dde1e7; border-top-color: #666677;
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 80px 24px; text-align: center; gap: 12px;
+}
+.empty-state h3 { font-size: 16px; font-weight: 700; color: var(--text-secondary); }
+.empty-state p  { font-size: 12px; color: var(--text-muted); max-width: 300px; }
+
+.btn-primary {
+  margin-top: 4px; padding: 8px 18px;
+  background: var(--accent); color: white; border: none; border-radius: var(--radius);
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+
+/* ── Scrollbar ────────────────────────────────────────────────── */
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 220px; }
+  .main { padding: 16px 18px; }
+  .breaking-feed { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 14px; }
+  .card-image { display: none; }
+}

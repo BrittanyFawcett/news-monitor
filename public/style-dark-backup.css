@@ -1,0 +1,602 @@
+/* ── Reset & Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --sidebar-w: 256px;
+
+  /* Dark palette */
+  --sidebar-bg:          #0d1220;
+  --sidebar-border:      rgba(255,255,255,0.055);
+  --sidebar-hover:       rgba(255,255,255,0.035);
+  --text-sidebar:        #6a6a6a;
+  --text-sidebar-active: #b0b0b0;
+
+  /* Main */
+  --accent:       #4a7abf;
+  --accent-hover: #3a6aaf;
+  --main-bg:      #0a0e1a;
+  --card-bg:      #0d1220;
+  --border:       #1e2a3a;
+  --border-light: #1a2535;
+  --text-primary:   #d8d8d8;
+  --text-secondary: #6a6a6a;
+  --text-muted:     #6a6a6a;
+  --text-dim:       #4a4a4a;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+  --radius: 4px;
+
+  /* Industry accent colors */
+  --c-big_tech_fintech: #4a7abf;
+  --c-card_networks:    #9a6abf;
+  --c-payments:         #6abf6a;
+  --c-commerce:         #6abfbf;
+  --c-bnpl:             #bf4a9a;
+  --c-neobanks:         #4abfbf;
+  --c-brokerage:        #bfa04a;
+  --c-mortgage_lending: #bf7a4a;
+  --c-crypto:           #7a6abf;
+  --c-open_banking:     #8a9bb0;
+
+  /* Breaking */
+  --breaking-border: #8b1a1a;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  background: var(--main-bg);
+  color: var(--text-primary);
+  line-height: 1.5;
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Layout ───────────────────────────────────────────────────── */
+.layout { display: flex; min-height: 100vh; }
+
+/* ── Sidebar ──────────────────────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  position: fixed;
+  top: 0; left: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--sidebar-border);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar-header {
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--sidebar-border);
+  flex-shrink: 0;
+}
+
+.logo { display: flex; align-items: center; gap: 9px; }
+.logo-text { line-height: 1.2; }
+.logo-title  { font-size: 14px; font-weight: 700; color: #ffffff; letter-spacing: -0.01em; }
+.logo-subtitle { font-size: 9.5px; color: #2a2a2a; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; margin-top: 1px; }
+
+/* Search */
+.sidebar-search { position: relative; padding: 9px 10px 6px; flex-shrink: 0; }
+
+.search-icon {
+  position: absolute; left: 20px; top: 50%;
+  transform: translateY(-50%); color: #2a2a2a; pointer-events: none;
+}
+
+#search-input {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius);
+  padding: 6px 10px 6px 30px;
+  color: #b0b0b0;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+#search-input::placeholder { color: #2a2a2a; }
+#search-input:focus { border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); }
+
+/* Nav */
+.sidebar-nav  { flex: 1; padding: 2px 0 8px; }
+.nav-section  { padding: 2px 0; }
+
+.nav-section-title {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #3a3a3a;
+  padding: 10px 14px 3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Filter buttons */
+.filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 14px;
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11.5px;
+  color: var(--text-sidebar);
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  text-align: left;
+}
+.filter-btn:hover  { background: var(--sidebar-hover); color: var(--text-sidebar-active); }
+.filter-btn.active { color: var(--text-sidebar-active); background: rgba(255,255,255,0.04); border-left-color: #3a3a3a; }
+
+/* Per-industry active border colors */
+.filter-btn[data-value="big_tech_fintech"].active { border-left-color: var(--c-big_tech_fintech); }
+.filter-btn[data-value="card_networks"].active    { border-left-color: var(--c-card_networks); }
+.filter-btn[data-value="payments"].active         { border-left-color: var(--c-payments); }
+.filter-btn[data-value="commerce"].active         { border-left-color: var(--c-commerce); }
+.filter-btn[data-value="bnpl"].active             { border-left-color: var(--c-bnpl); }
+.filter-btn[data-value="neobanks"].active         { border-left-color: var(--c-neobanks); }
+.filter-btn[data-value="brokerage"].active        { border-left-color: var(--c-brokerage); }
+.filter-btn[data-value="mortgage_lending"].active { border-left-color: var(--c-mortgage_lending); }
+.filter-btn[data-value="crypto"].active           { border-left-color: var(--c-crypto); }
+.filter-btn[data-value="open_banking"].active     { border-left-color: var(--c-open_banking); }
+
+.filter-label { flex: 1; }
+.filter-count { font-size: 10px; font-weight: 700; color: #3a3a3a; min-width: 20px; text-align: right; }
+.filter-btn.active .filter-count { color: #5a5a5a; }
+
+/* Dots — industry section only */
+.dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  flex-shrink: 0; opacity: 0.35; transition: opacity 0.1s;
+}
+.filter-btn.active .dot { opacity: 1; }
+
+.dot-big_tech_fintech { background: var(--c-big_tech_fintech); }
+.dot-card_networks    { background: var(--c-card_networks); }
+.dot-payments         { background: var(--c-payments); }
+.dot-commerce         { background: var(--c-commerce); }
+.dot-bnpl             { background: var(--c-bnpl); }
+.dot-neobanks         { background: var(--c-neobanks); }
+.dot-brokerage        { background: var(--c-brokerage); }
+.dot-mortgage_lending { background: var(--c-mortgage_lending); }
+.dot-crypto           { background: var(--c-crypto); }
+.dot-open_banking     { background: var(--c-open_banking); }
+
+/* ── Select All button ────────────────────────────────────────── */
+.select-all-btn {
+  background: none; border: none;
+  color: #3a3a3a; font-size: 9px; font-weight: 700;
+  font-family: inherit; cursor: pointer;
+  padding: 1px 5px; border-radius: 3px;
+  transition: color 0.1s;
+  white-space: nowrap; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.select-all-btn:hover { color: #6a6a6a; }
+
+/* ── Companies collapse toggle ────────────────────────────────── */
+.companies-title { cursor: default; gap: 6px; }
+
+.section-collapse-btn {
+  background: none; border: none; cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  color: #3a3a3a; font-size: 9px; font-weight: 700;
+  font-family: inherit; text-transform: uppercase; letter-spacing: 0.12em;
+  padding: 0; transition: color 0.1s; flex: 1;
+}
+.section-collapse-btn:hover { color: #6a6a6a; }
+
+.collapse-arrow { transition: transform 0.2s ease; color: #2a2a2a; flex-shrink: 0; }
+.section-collapse-btn.expanded .collapse-arrow { transform: rotate(180deg); }
+
+/* Company clear button */
+.company-clear-btn {
+  display: flex; align-items: center; gap: 4px;
+  background: rgba(255,255,255,0.06); border: none; border-radius: 20px;
+  color: #b0b0b0; font-size: 10px; font-weight: 600; padding: 2px 7px 2px 8px;
+  cursor: pointer; transition: background 0.1s; white-space: nowrap; max-width: 110px; overflow: hidden;
+  flex-shrink: 0;
+}
+.company-clear-btn:hover { background: rgba(255,255,255,0.1); }
+.company-clear-btn span:first-child { overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Company picker ───────────────────────────────────────────── */
+.company-filter-panel { padding: 2px 10px 8px; }
+.company-group { margin-bottom: 8px; }
+
+.company-group-label {
+  font-size: 9px; font-weight: 700; color: #2a2a2a;
+  text-transform: uppercase; letter-spacing: 0.09em; padding: 2px 4px 4px;
+}
+
+.company-chips { display: flex; flex-wrap: wrap; gap: 3px; }
+
+.company-chip {
+  padding: 2px 7px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 3px;
+  color: #3a3a3a; font-size: 10.5px; font-family: inherit;
+  font-weight: 500; cursor: pointer; transition: all 0.1s; white-space: nowrap;
+}
+.company-chip:hover  { background: rgba(255,255,255,0.07); color: #6a6a6a; border-color: rgba(255,255,255,0.1); }
+.company-chip.active { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.18); color: #b0b0b0; }
+
+/* ── Date presets — compact pills ─────────────────────────────── */
+.date-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 3px 10px 8px;
+}
+
+.preset-btn {
+  padding: 3px 9px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  color: #5a5a5a;
+  font-size: 10px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.1s;
+  white-space: nowrap;
+}
+.preset-btn:hover  { background: rgba(255,255,255,0.07); color: #b0b0b0; }
+.preset-btn.active { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #ffffff; }
+
+/* Sidebar footer */
+.sidebar-footer { padding: 10px; border-top: 1px solid var(--sidebar-border); flex-shrink: 0; }
+
+.fetch-btn {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; padding: 8px 14px;
+  background: var(--accent); color: white; border: none; border-radius: var(--radius);
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;
+  letter-spacing: 0.02em; transition: background 0.15s;
+}
+.fetch-btn:hover   { background: var(--accent-hover); }
+.fetch-btn:active  { opacity: 0.88; }
+.fetch-btn:disabled { background: #0f1e35; cursor: not-allowed; opacity: 0.6; }
+.fetch-icon.spinning { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.sidebar-stats { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 9px; }
+.stat { text-align: center; }
+.stat-value { display: block; font-size: 13px; font-weight: 700; color: #b0b0b0; letter-spacing: -0.01em; }
+.stat-label { font-size: 9px; color: #2a2a2a; text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
+.stat-divider { width: 1px; height: 24px; background: var(--sidebar-border); }
+
+/* ── Main Content ─────────────────────────────────────────────── */
+.main { margin-left: var(--sidebar-w); flex: 1; padding: 22px 28px 40px; min-height: 100vh; }
+
+.main-header { margin-bottom: 18px; }
+
+.result-title {
+  font-size: 20px; font-weight: 800; color: #ffffff;
+  letter-spacing: -0.03em; display: flex; align-items: baseline; gap: 6px;
+}
+.result-label    { font-size: 14px; font-weight: 400; color: var(--text-muted); }
+.result-subtitle { margin-top: 2px; font-size: 12px; color: var(--text-muted); }
+
+.fetch-notice {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  color: #b0b0b0; border-radius: var(--radius);
+  padding: 8px 14px; font-size: 12px; font-weight: 600; margin-bottom: 16px;
+}
+
+/* ── Breaking News ────────────────────────────────────────────── */
+.breaking-section {
+  background: #120a0a;
+  border: 1px solid #3a1010;
+  border-top: 2px solid #8b1a1a;
+  border-radius: 5px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.breaking-header {
+  background: linear-gradient(90deg, #1a0808 0%, #150606 100%);
+  padding: 8px 16px;
+  display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px solid #2a0a0a;
+}
+
+.breaking-badge {
+  display: flex; align-items: center; gap: 6px;
+  color: #cc4444; font-size: 10.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.12em; white-space: nowrap;
+}
+
+.breaking-desc { font-size: 11px; color: #6a2a2a; }
+
+.breaking-feed {
+  padding: 10px 12px 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+/* ── Breaking Cards ───────────────────────────────────────────── */
+.breaking-card {
+  width: 100%;
+  background: #1a0f0f;
+  border: 1px solid #8b1a1a;
+  border-radius: 4px;
+  display: flex;
+  text-decoration: none; color: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+.breaking-card:hover { background: #200f0f; border-color: #aa2020; }
+
+.breaking-card-body { flex: 1; padding: 10px 14px; min-width: 0; }
+
+.breaking-card-top {
+  font-size: 9.5px; font-weight: 800; color: #ffffff;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 5px;
+}
+
+.breaking-evt-row { margin-bottom: 5px; }
+
+.breaking-evt-tag {
+  display: inline-flex; align-items: center;
+  padding: 1px 8px; border-radius: 3px;
+  font-size: 9.5px; font-weight: 700;
+  background: rgba(255,255,255,0.05);
+  color: #888888;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.breaking-card-divider {
+  height: 1px;
+  background: rgba(139,26,26,0.5);
+  margin: 7px 0;
+}
+
+.breaking-card-title {
+  font-size: 13px; font-weight: 600; color: #ffffff;
+  line-height: 1.4; margin-bottom: 6px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.breaking-card-footer { font-size: 10.5px; color: #6a2a2a; font-weight: 500; }
+
+/* ── Industry Sections ────────────────────────────────────────── */
+.industry-section { margin-bottom: 26px; }
+
+.industry-header {
+  display: flex; align-items: center;
+  padding: 8px 14px;
+  margin-bottom: 10px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.02);
+}
+
+/* Per-industry full background */
+.industry-section[data-industry="big_tech_fintech"] .industry-header { background: #1a2a4a; }
+.industry-section[data-industry="card_networks"]    .industry-header { background: #1e1a3a; }
+.industry-section[data-industry="payments"]         .industry-header { background: #1a2a1a; }
+.industry-section[data-industry="commerce"]         .industry-header { background: #1a2a2a; }
+.industry-section[data-industry="bnpl"]             .industry-header { background: #2a1a2a; }
+.industry-section[data-industry="neobanks"]         .industry-header { background: #1a2a2a; }
+.industry-section[data-industry="brokerage"]        .industry-header { background: #2a2a1a; }
+.industry-section[data-industry="mortgage_lending"] .industry-header { background: #2a1e1a; }
+.industry-section[data-industry="crypto"]           .industry-header { background: #1e1a2a; }
+.industry-section[data-industry="open_banking"]     .industry-header { background: #1a1a1e; }
+
+.industry-title {
+  font-size: 10.5px; font-weight: 800; color: #ffffff;
+  text-transform: uppercase; letter-spacing: 1.2px; flex: 1;
+}
+
+.industry-count {
+  font-size: 10px; color: rgba(255,255,255,0.3); font-weight: 600;
+}
+
+.industry-body { display: flex; flex-direction: column; gap: 0; }
+
+/* ── Event Groups ─────────────────────────────────────────────── */
+.event-group { margin-bottom: 10px; }
+
+.event-group-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 5px; padding: 0 2px;
+}
+
+.event-group-toggle {
+  cursor: pointer;
+  user-select: none;
+  border-radius: 2px;
+  padding: 3px 4px;
+  margin: -3px -4px;
+  transition: background 0.12s;
+}
+.event-group-toggle:hover { background: rgba(255,255,255,0.04); }
+
+.event-group-arrow {
+  flex-shrink: 0;
+  color: #5a5a5a;
+  transition: transform 0.18s ease;
+}
+.event-group-toggle:hover .event-group-arrow { color: #8a8a8a; }
+.event-group.collapsed .event-group-arrow { transform: rotate(-90deg); }
+.event-group.collapsed .event-group-body  { display: none; }
+
+.event-group-label {
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.13em; color: var(--text-muted); flex: 1;
+}
+
+/* Per-industry event label color */
+.industry-section[data-industry="big_tech_fintech"] .event-group-label { color: #4a7abf; }
+.industry-section[data-industry="card_networks"]    .event-group-label { color: #9a6abf; }
+.industry-section[data-industry="payments"]         .event-group-label { color: #6abf6a; }
+.industry-section[data-industry="commerce"]         .event-group-label { color: #6abfbf; }
+.industry-section[data-industry="bnpl"]             .event-group-label { color: #bf4a9a; }
+.industry-section[data-industry="neobanks"]         .event-group-label { color: #4abfbf; }
+.industry-section[data-industry="brokerage"]        .event-group-label { color: #bfa04a; }
+.industry-section[data-industry="mortgage_lending"] .event-group-label { color: #bf7a4a; }
+.industry-section[data-industry="crypto"]           .event-group-label { color: #7a6abf; }
+.industry-section[data-industry="open_banking"]     .event-group-label { color: #8a9bb0; }
+
+
+.articles-list { display: flex; flex-direction: column; gap: 4px; }
+
+.load-section-btn {
+  display: block; width: 100%; margin-top: 4px; padding: 7px 14px;
+  background: rgba(255,255,255,0.018); border: 1px dashed rgba(255,255,255,0.07); border-radius: var(--radius);
+  font-size: 11.5px; font-weight: 600; font-family: inherit;
+  color: var(--text-muted); cursor: pointer; transition: all 0.12s; text-align: center;
+}
+.load-section-btn:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); color: #b0b0b0; }
+.load-section-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.section-more { margin-top: 6px; }
+
+/* ── Article Card ─────────────────────────────────────────────── */
+.article-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  display: flex; gap: 10px; align-items: flex-start;
+  transition: border-color 0.12s, background 0.12s;
+  text-decoration: none; color: inherit;
+}
+.article-card:hover { border-color: #2a3d55; background: #0f1628; }
+
+.card-body { flex: 1; min-width: 0; }
+
+.card-meta {
+  display: flex; align-items: center; gap: 4px;
+  flex-wrap: wrap; margin-bottom: 4px;
+}
+
+/* ── Badges ───────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 1px 6px; border-radius: 3px;
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.03em; white-space: nowrap;
+}
+
+/* Source type badges — neutral gray */
+.badge-news, .badge-rss, .badge-filing, .badge-press_release {
+  background: rgba(255,255,255,0.05);
+  color: #b0b0b0;
+}
+
+/* Industry badges (used in breaking section) */
+.badge-big_tech_fintech { background: rgba(74,122,191,0.12); color: #5a8abf; }
+.badge-card_networks    { background: rgba(154,106,191,0.12); color: #aa8abf; }
+.badge-payments         { background: rgba(106,191,106,0.12); color: #6abf6a; }
+.badge-commerce         { background: rgba(106,191,191,0.12); color: #6abfbf; }
+.badge-bnpl             { background: rgba(191,74,154,0.12); color: #bf6ab0; }
+.badge-neobanks         { background: rgba(74,191,191,0.12); color: #4abfbf; }
+.badge-brokerage        { background: rgba(191,160,74,0.12); color: #bfa04a; }
+.badge-mortgage_lending { background: rgba(191,122,74,0.12); color: #bf8a6a; }
+.badge-crypto           { background: rgba(122,106,191,0.12); color: #8a7abf; }
+.badge-open_banking     { background: rgba(138,155,176,0.12); color: #8a9bb0; }
+
+/* Event type badges (used in breaking section) */
+.badge-evt-ma             { background: rgba(239,68,68,0.12); color: #f87171; }
+.badge-evt-regulatory     { background: rgba(251,146,60,0.12); color: #fb923c; }
+.badge-evt-product_launch { background: rgba(74,222,128,0.12); color: #4ade80; }
+.badge-evt-earnings       { background: rgba(96,165,250,0.12); color: #60a5fa; }
+.badge-evt-leadership     { background: rgba(167,139,250,0.12); color: #a78bfa; }
+.badge-evt-fundraising    { background: rgba(34,211,238,0.12); color: #22d3ee; }
+.badge-evt-partnerships   { background: rgba(45,212,191,0.12); color: #2dd4bf; }
+
+.card-time {
+  margin-left: auto; font-size: 10.5px; color: var(--text-muted);
+  white-space: nowrap; flex-shrink: 0;
+}
+
+.card-title {
+  font-size: 12.5px; font-weight: 600; color: #d8d8d8;
+  line-height: 1.38; margin-bottom: 3px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.card-description {
+  font-size: 11.5px; color: var(--text-secondary); line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  margin-bottom: 4px;
+}
+
+/* ── Company Tags — neutral gray ──────────────────────────────── */
+.company-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 4px; }
+
+.company-tag {
+  display: inline-flex; align-items: center;
+  padding: 1px 6px; border-radius: 3px;
+  font-size: 10px; font-weight: 600;
+  background: rgba(255,255,255,0.04);
+  color: #b0b0b0;
+  border: 1px solid rgba(255,255,255,0.08);
+  letter-spacing: 0.01em;
+}
+
+.card-footer { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+.card-source { font-weight: 600; color: var(--text-dim); }
+
+.card-image {
+  flex-shrink: 0; width: 68px; height: 50px;
+  border-radius: 3px; overflow: hidden; background: #080c14; border: 1px solid var(--border);
+}
+.card-image img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── States ───────────────────────────────────────────────────── */
+.hidden { display: none !important; }
+
+.loading-spinner { display: flex; justify-content: center; padding: 60px; }
+
+.spinner {
+  width: 28px; height: 28px;
+  border: 2.5px solid var(--border); border-top-color: #6a6a6a;
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 80px 24px; text-align: center; gap: 12px;
+}
+.empty-state h3 { font-size: 16px; font-weight: 700; color: var(--text-secondary); }
+.empty-state p  { font-size: 12px; color: var(--text-muted); max-width: 300px; }
+
+.btn-primary {
+  margin-top: 4px; padding: 8px 18px;
+  background: var(--accent); color: white; border: none; border-radius: var(--radius);
+  font-size: 12px; font-weight: 700; font-family: inherit; cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+
+/* ── Scrollbar ────────────────────────────────────────────────── */
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 220px; }
+  .main { padding: 16px 18px; }
+  .breaking-feed { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 14px; }
+  .card-image { display: none; }
+}

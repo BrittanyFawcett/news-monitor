@@ -1,0 +1,319 @@
+require('dotenv').config();
+const express = require('express');
+const cron    = require('node-cron');
+const path    = require('path');
+const db      = require('./db');
+const { fetchNewsAPI }      = require('./fetchers/newsapi');
+const { fetchRSSFeeds }     = require('./fetchers/rss');
+const { fetchEDGARFilings } = require('./fetchers/edgar');
+const { fetchPressReleases } = require('./fetchers/pressrelease');
+const { isBreaking }        = require('./fetchers/classify');
+const { decodeEntities }    = require('./fetchers/decode');
+
+const app  = express();
+const PORT = process.env.PORT || 3000;
+
+const INDUSTRIES = [
+  'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
+  'neobanks', 'brokerage', 'mortgage_lending', 'crypto', 'open_banking',
+];
+
+const EVENT_TYPES = ['ma', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory'];
+
+// Breaking news: event types that signal high-impact financial events
+const BREAKING_EVENT_TYPES = ['ma', 'fundraising', 'earnings', 'leadership', 'regulatory'];
+
+// Order in which event types are displayed within each industry section
+const EVENT_TYPE_ORDER = ['ma', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory'];
+
+let isFetching    = false;
+let lastFetchTime = null;
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ── Fetcher ────────────────────────────────────────────────────────────────
+async function runAllFetchers() {
+  if (isFetching) return;
+  isFetching = true;
+  console.log('\n[Fetch] Starting...');
+
+  // Per-industry: NewsAPI + RSS feeds
+  for (const industry of INDUSTRIES) {
+    await fetchNewsAPI(industry);
+    await fetchRSSFeeds(industry);
+  }
+
+  // Company-specific: SEC EDGAR 8-K filings (CIK-based, runs once)
+  await fetchEDGARFilings();
+
+  // Press releases: BusinessWire, PR Newswire, GlobeNewswire
+  await fetchPressReleases();
+
+  lastFetchTime = new Date().toISOString();
+  isFetching = false;
+  console.log('[Fetch] Complete\n');
+}
+
+// ── Shared query builder ───────────────────────────────────────────────────
+function buildBaseConditions(req) {
+  const { source_type, date_from, search, company } = req.query;
+  const conds  = [];
+  const params = [];
+
+  if (source_type) {
+    const list = source_type.split(',').filter(Boolean);
+    if (list.length) {
+      conds.push(`source_type IN (${list.map(() => '?').join(',')})`);
+      params.push(...list);
+    }
+  }
+
+  if (date_from) { conds.push('published_at >= ?'); params.push(date_from); }
+
+  if (search) {
+    conds.push('(title LIKE ? OR description LIKE ?)');
+    params.push(`%${search}%`, `%${search}%`);
+  }
+
+  if (company) {
+    conds.push('companies LIKE ?');
+    params.push(`%${company}%`);
+  }
+
+  return { conds, params };
+}
+
+function makeWhere(conds) {
+  return conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+}
+
+function applyEventTypeFilter(list, conds, params) {
+  const hasNone = list.includes('none');
+  const others  = list.filter(v => v !== 'none');
+  if (hasNone && others.length) {
+    conds.push(`(event_type IN (${others.map(() => '?').join(',')}) OR event_type IS NULL OR event_type = '')`);
+    params.push(...others);
+  } else if (hasNone) {
+    conds.push(`(event_type IS NULL OR event_type = '')`);
+  } else if (others.length) {
+    conds.push(`event_type IN (${others.map(() => '?').join(',')})`);
+    params.push(...others);
+  }
+}
+
+// ── GET /api/feed — structured layout ─────────────────────────────────────
+app.get('/api/feed', (req, res) => {
+  const { industry, event_type } = req.query;
+  const activeIndustries = industry ? industry.split(',').filter(Boolean) : INDUSTRIES;
+  const activeEventTypes = event_type ? event_type.split(',').filter(Boolean) : null;
+
+  const { conds: base, params: baseParams } = buildBaseConditions(req);
+
+  try {
+    // ── Breaking news — uses is_breaking flag set at fetch time ────────────
+    let breaking = [];
+    {
+      const bConds  = [...base, 'is_breaking = 1'];
+      const bParams = [...baseParams];
+
+      if (activeEventTypes) applyEventTypeFilter(activeEventTypes, bConds, bParams);
+
+      if (activeIndustries.length < INDUSTRIES.length) {
+        bConds.push(`industry IN (${activeIndustries.map(() => '?').join(',')})`);
+        bParams.push(...activeIndustries);
+      }
+
+      breaking = db.prepare(
+        `SELECT * FROM articles ${makeWhere(bConds)} ORDER BY published_at DESC`
+      ).all(...bParams);
+    }
+
+    // ── Industry sections ───────────────────────────────────────────────
+    const sections = [];
+    let total = 0;
+
+    for (const ind of activeIndustries) {
+      const iConds  = [...base, 'industry = ?'];
+      const iParams = [...baseParams, ind];
+
+      if (activeEventTypes) applyEventTypeFilter(activeEventTypes, iConds, iParams);
+
+      const where  = makeWhere(iConds);
+      const indTotal = db.prepare(`SELECT COUNT(*) as n FROM articles ${where}`).get(...iParams).n;
+      if (!indTotal) continue;
+      total += indTotal;
+
+      const articles = db.prepare(
+        `SELECT * FROM articles ${where} ORDER BY published_at DESC LIMIT 200`
+      ).all(...iParams);
+
+      const groups  = {};
+      const general = [];
+
+      for (const a of articles) {
+        if (a.event_type) {
+          if (!groups[a.event_type]) groups[a.event_type] = [];
+          groups[a.event_type].push(a);
+        } else {
+          if (general.length < 10) general.push(a);
+        }
+      }
+
+      const eventGroups = EVENT_TYPE_ORDER
+        .filter(et => groups[et])
+        .map(et => ({ eventType: et, articles: groups[et] }));
+
+      sections.push({ industry: ind, total: indTotal, eventGroups, general });
+    }
+
+    res.json({ breaking, sections, total });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/articles — flat paginated list ────────────────────────────────
+app.get('/api/articles', (req, res) => {
+  const { industry, source_type, event_type, date_from, date_to, search, company,
+          limit = 20, offset = 0 } = req.query;
+
+  const conditions = [];
+  const params = [];
+
+  if (industry) {
+    const list = industry.split(',').filter(Boolean);
+    if (list.length) {
+      conditions.push(`industry IN (${list.map(() => '?').join(',')})`);
+      params.push(...list);
+    }
+  }
+
+  if (source_type) {
+    const list = source_type.split(',').filter(Boolean);
+    if (list.length) {
+      conditions.push(`source_type IN (${list.map(() => '?').join(',')})`);
+      params.push(...list);
+    }
+  }
+
+  if (event_type) {
+    const list = event_type.split(',').filter(Boolean);
+    if (list.length) applyEventTypeFilter(list, conditions, params);
+  }
+
+  if (date_from) { conditions.push('published_at >= ?'); params.push(date_from); }
+  if (date_to)   { conditions.push('published_at <= ?'); params.push(date_to + 'T23:59:59Z'); }
+
+  if (search) {
+    conditions.push('(title LIKE ? OR description LIKE ?)');
+    params.push(`%${search}%`, `%${search}%`);
+  }
+
+  if (company) {
+    conditions.push('companies LIKE ?');
+    params.push(`%${company}%`);
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  try {
+    const total    = db.prepare(`SELECT COUNT(*) as n FROM articles ${where}`).get(...params).n;
+    const articles = db.prepare(
+      `SELECT * FROM articles ${where} ORDER BY published_at DESC LIMIT ? OFFSET ?`
+    ).all(...params, parseInt(limit), parseInt(offset));
+
+    res.json({ articles, total, offset: parseInt(offset) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/fetch ────────────────────────────────────────────────────────
+app.post('/api/fetch', (req, res) => {
+  if (isFetching) return res.json({ status: 'already_running' });
+  res.json({ status: 'started' });
+  runAllFetchers();
+});
+
+// ── GET /api/status ────────────────────────────────────────────────────────
+app.get('/api/status', (_req, res) => {
+  const industryCols = INDUSTRIES.map(i =>
+    `COUNT(CASE WHEN industry = '${i}' THEN 1 END) AS ${i}_count`
+  ).join(', ');
+
+  const eventCols = EVENT_TYPES.map(e =>
+    `COUNT(CASE WHEN event_type = '${e}' THEN 1 END) AS ${e}_count`
+  ).join(', ');
+
+  const stats = db.prepare(`
+    SELECT
+      COUNT(*) AS total,
+      COUNT(CASE WHEN source_type = 'news'          THEN 1 END) AS news_count,
+      COUNT(CASE WHEN source_type = 'rss'           THEN 1 END) AS rss_count,
+      COUNT(CASE WHEN source_type = 'filing'        THEN 1 END) AS filing_count,
+      COUNT(CASE WHEN source_type = 'press_release' THEN 1 END) AS press_release_count,
+      ${industryCols},
+      ${eventCols}
+    FROM articles
+  `).get();
+
+  const industry_news_count = db.prepare(
+    `SELECT COUNT(*) AS n FROM articles WHERE event_type IS NULL OR event_type = ''`
+  ).get().n;
+
+  res.json({ ...stats, industry_news_count, isFetching, lastFetchTime });
+});
+
+// ── Cron: every 2 hours ────────────────────────────────────────────────────
+cron.schedule('0 */2 * * *', runAllFetchers);
+
+// ── Decode HTML entities in existing articles ──────────────────────────────
+function cleanupEntityEncoding() {
+  const rows = db.prepare('SELECT id, title, description, source_name, author FROM articles').all();
+  const update = db.prepare('UPDATE articles SET title=?, description=?, source_name=?, author=? WHERE id=?');
+  const tx = db.transaction(() => {
+    let n = 0;
+    for (const r of rows) {
+      const t = decodeEntities(r.title);
+      const d = r.description ? decodeEntities(r.description) : null;
+      const s = r.source_name ? decodeEntities(r.source_name) : null;
+      const a = r.author      ? decodeEntities(r.author)      : null;
+      if (t !== r.title || d !== r.description || s !== r.source_name || a !== r.author) {
+        update.run(t, d, s, a, r.id);
+        n++;
+      }
+    }
+    return n;
+  });
+  const n = tx();
+  if (n > 0) console.log(`[DB] Decoded HTML entities in ${n} articles`);
+}
+
+// ── Backfill is_breaking for articles fetched before this field existed ────
+function backfillBreaking() {
+  const rows = db.prepare('SELECT id, title, description FROM articles WHERE is_breaking IS NULL').all();
+  if (!rows.length) return;
+  const update = db.prepare('UPDATE articles SET is_breaking = 1 WHERE id = ?');
+  const tx = db.transaction(() => {
+    let n = 0;
+    for (const r of rows) { if (isBreaking(r.title, r.description)) { update.run(r.id); n++; } }
+    return n;
+  });
+  const n = tx();
+  if (n > 0) console.log(`[DB] Backfilled ${n} breaking articles`);
+}
+
+// ── Start ──────────────────────────────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`\nMarketPulse → http://localhost:${PORT}\n`);
+  cleanupEntityEncoding();
+  backfillBreaking();
+  const count = db.prepare('SELECT COUNT(*) as n FROM articles').get().n;
+  if (count === 0) {
+    console.log('Empty database — running initial fetch...');
+    setTimeout(runAllFetchers, 1500);
+  }
+});
