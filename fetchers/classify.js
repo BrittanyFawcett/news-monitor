@@ -18,7 +18,7 @@ const ALL_COMPANIES = [
   { name: 'BlackRock',        terms: ['blackrock'] },
   { name: 'Robinhood',        terms: ['robinhood'] },
   // Card Networks
-  { name: 'Visa',             terms: ['visa network', 'visa payment', 'visa card', 'visa inc', 'visa'] },
+  { name: 'Visa',             terms: ['visa network', 'visa payment', 'visa card', 'visa inc'] },
   { name: 'Mastercard',       terms: ['mastercard'] },
   { name: 'American Express', terms: ['american express', 'amex'] },
   { name: 'Discover',         terms: ['discover financial', 'discover card'] },
@@ -201,9 +201,41 @@ const AMBIGUOUS_SINGLE_TERMS = new Set([
   'kraken',    // also: mythological creature
   'vanguard',  // also: military/organizational vanguard
   'fidelity',  // also: faithfulness, audio fidelity
-  'visa',      // also: travel document
   'google',    // also: common verb ("google it")
 ]);
+
+// ── Visa context detection ────────────────────────────────────────────────
+// Bare 'visa' requires a nearby financial term and no immigration signal.
+const VISA_FINANCIAL_TERMS = [
+  'payment', 'card', 'network', 'mastercard', 'transaction', 'checkout',
+  'merchant', 'interchange', 'token', 'tokenization', 'contactless',
+  'debit', 'credit', 'fintech', 'financial', 'banking', 'settlement',
+  'acquiring', 'issuing', 'pos', 'point of sale',
+];
+
+const VISA_EXCLUSION_TERMS = [
+  'h1b', 'h-1b', 'immigration', 'work visa', 'student visa', 'tourist visa',
+  'travel visa', 'visa application', 'visa requirements', 'visa fee',
+  'embassy', 'passport', 'green card', 'immigration reform', 'foreign worker',
+  'sponsorship', 'deportation', 'border', 'citizenship', 'naturalization',
+  'f1 visa', 'l1 visa', 'o1 visa',
+];
+
+const VISA_CONTEXT_WINDOW = 120;
+
+function detectVisaByContext(lowerText) {
+  if (!lowerText.includes('visa')) return false;
+  if (VISA_EXCLUSION_TERMS.some(t => lowerText.includes(t))) return false;
+  let idx = 0;
+  while ((idx = lowerText.indexOf('visa', idx)) !== -1) {
+    const start   = Math.max(0, idx - VISA_CONTEXT_WINDOW);
+    const end     = Math.min(lowerText.length, idx + VISA_CONTEXT_WINDOW);
+    const context = lowerText.slice(start, end);
+    if (VISA_FINANCIAL_TERMS.some(t => context.includes(t))) return true;
+    idx += 4;
+  }
+  return false;
+}
 
 function detectCompanies(title, description) {
   const lowerText = `${title || ''} ${description || ''}`.toLowerCase();
@@ -221,6 +253,7 @@ function detectCompanies(title, description) {
       return ch >= 'A' && ch <= 'Z';
     })) found.add(name);
   }
+  if (!found.has('Visa') && detectVisaByContext(lowerText)) found.add('Visa');
   return [...found];
 }
 
