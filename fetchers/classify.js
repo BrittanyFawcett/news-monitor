@@ -70,11 +70,14 @@ const EVENT_PATTERNS = [
     'agreed to acquire', 'agreed to buy', 'agrees to acquire', 'agrees to buy',
     'to acquire', 'purchased by', 'all-cash deal',
   ]},
+  { key: 'ipo', terms: [
+    'ipo', 'initial public offering', 'spac', 'goes public', 'public offering',
+    'stock market debut', 'files for ipo',
+  ]},
   { key: 'fundraising', terms: [
-    'ipo', 'initial public offering', 'funding round', 'series a', 'series b',
-    'series c', 'series d', 'series e', 'raises $', 'raised $',
-    'valuation', 'venture capital', 'spac', 'goes public', 'public offering',
-    'seed round', 'pre-ipo',
+    'funding round', 'series a', 'series b', 'series c', 'series d', 'series e',
+    'raises $', 'raised $', 'venture capital', 'seed round', 'pre-ipo',
+    'credit facility', 'debt financing', 'valuation',
   ]},
   // Earnings: use compound / specific phrases — avoid standalone 'revenue'/'profit'
   // which appear in almost every financial article description
@@ -96,6 +99,8 @@ const EVENT_PATTERNS = [
     'fined', 'fine of', 'lawsuit', 'lawsuits', 'sanction', 'penalty',
     'violation', 'charges against', 'charged with', 'compliance violation',
     'regulatory investigation', 'regulatory penalty',
+    'investigation', 'ban', 'banned', 'subpoena', 'settlement', 'class action',
+    'antitrust', 'fraud charges', 'cease and desist', 'warning letter', 'probe',
   ]},
   // Leadership: 'ceo'/'cfo' etc. placed AFTER earnings & regulatory so that
   // "CEO guides Q3 earnings" → earnings, "CEO faces SEC probe" → regulatory
@@ -103,6 +108,8 @@ const EVENT_PATTERNS = [
     'ceo', 'cfo', 'coo', 'cto', 'chief executive', 'chief financial officer',
     'appointed', 'appoints', 'resigns', 'resigned', 'fired',
     'stepping down', 'steps down', 'named as', 'joins as', 'named chief',
+    'departure', 'successor', 'interim ceo', 'board appointment', 'board resignation',
+    'steps aside',
   ]},
   { key: 'partnerships', terms: [
     'partnership', 'partners with', 'joint venture', 'collaboration',
@@ -110,10 +117,9 @@ const EVENT_PATTERNS = [
     'agreement with', 'deal with', 'teams up', 'integrates with', 'integrate with',
   ]},
   { key: 'product_launch', terms: [
-    'launches', 'launched', 'announces', 'introduces', 'introduced',
-    'unveils', 'unveiled', 'debuts', 'rolls out', 'rollout',
-    'new product', 'new feature', 'new service', 'new platform', 'new tool',
-    'expands', 'expansion',
+    'launches', 'launched', 'introduces', 'introduced',
+    'unveils', 'unveiled', 'debuts', 'rolls out',
+    'new product', 'new feature', 'new service', 'new platform',
   ]},
 ];
 

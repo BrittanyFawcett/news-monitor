@@ -20,13 +20,13 @@ const INDUSTRIES = [
   'neobanks', 'brokerage', 'mortgage_lending', 'crypto', 'open_banking',
 ];
 
-const EVENT_TYPES = ['ma', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory'];
+const EVENT_TYPES = ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory'];
 
 // Breaking news: event types that signal high-impact financial events
-const BREAKING_EVENT_TYPES = ['ma', 'fundraising', 'earnings', 'leadership', 'regulatory'];
+const BREAKING_EVENT_TYPES = ['ma', 'ipo', 'fundraising', 'earnings', 'leadership', 'regulatory'];
 
 // Order in which event types are displayed within each industry section
-const EVENT_TYPE_ORDER = ['ma', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory'];
+const EVENT_TYPE_ORDER = ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory'];
 
 let isFetching    = false;
 let lastFetchTime = null;

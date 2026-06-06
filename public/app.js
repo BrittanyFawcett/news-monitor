@@ -31,6 +31,7 @@ const EVENT_TYPE_LABELS = {
   regulatory:     'Regulatory',
   // DB-only keys (used in breaking/section card badges)
   ma:             'M&A',
+  ipo:            'IPO',
   fundraising:    'Fundraising',
   industry_news:  'Industry News',
 };
@@ -122,7 +123,7 @@ function buildFilterParams() {
   if (state.eventTypes.size > 0) {
     const apiTypes = new Set();
     for (const t of state.eventTypes) {
-      if (t === 'ma_fundraising') { apiTypes.add('ma'); apiTypes.add('fundraising'); }
+      if (t === 'ma_fundraising') { apiTypes.add('ma'); apiTypes.add('ipo'); apiTypes.add('fundraising'); }
       else if (t === 'industry_news') { apiTypes.add('none'); }
       else apiTypes.add(t);
     }
@@ -423,7 +424,7 @@ async function refreshStatus() {
     }
     // Combined M&A + Fundraising count
     const mafEl = document.getElementById('cnt-ma_fundraising');
-    if (mafEl) mafEl.textContent = ((data.ma_count || 0) + (data.fundraising_count || 0)).toLocaleString();
+    if (mafEl) mafEl.textContent = ((data.ma_count || 0) + (data.ipo_count || 0) + (data.fundraising_count || 0)).toLocaleString();
     // Individual event type counts
     for (const et of ['earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory', 'industry_news']) {
       const el = document.getElementById(`cnt-${et}`);
