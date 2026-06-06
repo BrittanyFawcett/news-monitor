@@ -43,7 +43,7 @@ const FEEDS = {
   brokerage: [
     { url: 'https://feeds.content.dowjones.io/public/rss/mw_realtimeheadlines', name: 'MarketWatch' },
     { url: 'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10000664', name: 'CNBC Finance' },
-    { url: 'https://www.americanbanker.com/feed',            name: 'American Banker' },
+    { url: 'https://www.bankingdive.com/feeds/news/',        name: 'Banking Dive' },
   ],
   card_networks: [
     { url: 'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',    name: 'WSJ Markets' },
@@ -51,7 +51,6 @@ const FEEDS = {
   ],
   open_banking: [
     { url: 'https://www.bankingdive.com/feeds/news/',        name: 'Banking Dive' },
-    { url: 'https://www.americanbanker.com/feed',            name: 'American Banker' },
   ],
   crypto: [
     { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', name: 'CoinDesk' },
@@ -61,14 +60,14 @@ const FEEDS = {
     { url: 'https://www.bankingdive.com/feeds/news/',         name: 'Banking Dive' },
   ],
   bnpl: [
-    { url: 'https://www.pymnts.com/feed/', name: 'PYMNTS', strict: true },
+    { url: 'https://www.paymentsjournal.com/feed/', name: 'Payments Journal' },
   ],
   mortgage_lending: [
     { url: 'https://www.housingwire.com/feed/',               name: 'HousingWire' },
     { url: 'https://nationalmortgagenews.com/rss',            name: 'National Mortgage News' },
   ],
   commerce: [
-    { url: 'https://www.pymnts.com/feed/', name: 'PYMNTS', strict: true },
+    { url: 'https://www.paymentsjournal.com/feed/', name: 'Payments Journal' },
     { url: 'https://www.modernretail.co/feed/',               name: 'Modern Retail' },
     { url: 'https://www.retaildive.com/feeds/news/',          name: 'Retail Dive' },
   ],
