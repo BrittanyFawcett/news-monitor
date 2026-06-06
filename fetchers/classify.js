@@ -18,7 +18,7 @@ const ALL_COMPANIES = [
   { name: 'BlackRock',        terms: ['blackrock'] },
   { name: 'Robinhood',        terms: ['robinhood'] },
   // Card Networks
-  { name: 'Visa',             terms: ['visa network', 'visa payment', 'visa card', 'visa inc'] },
+  { name: 'Visa',             terms: ['visa network', 'visa payment', 'visa inc', 'visa checkout', 'visa direct'] },
   { name: 'Mastercard',       terms: ['mastercard'] },
   { name: 'American Express', terms: ['american express', 'amex'] },
   { name: 'Discover',         terms: ['discover financial', 'discover card'] },
@@ -277,6 +277,8 @@ function detectCompanies(title, description) {
     })) found.add(name);
   }
   if (!found.has('Visa') && detectVisaByContext(lowerText)) found.add('Visa');
+  // Exclusion check applies regardless of which path added Visa
+  if (found.has('Visa') && VISA_EXCLUSION_TERMS.some(t => lowerText.includes(t))) found.delete('Visa');
   return [...found];
 }
 
