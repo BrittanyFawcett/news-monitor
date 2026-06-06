@@ -397,7 +397,7 @@ function removeVisaFalsePositives() {
       const redetected = detectCompanies(r.title, r.description);
       if (redetected.includes('Visa')) continue;
       const newCompanies = redetected.join(',');
-      const newIndustry  = detectIndustry(redetected, r.title, r.description);
+      const newIndustry  = detectIndustry(redetected, r.title, r.description) || r.industry;
       update.run(newCompanies, newIndustry, r.id);
       n++;
     }
