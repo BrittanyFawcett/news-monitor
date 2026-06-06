@@ -9,7 +9,7 @@ const { fetchEDGARFilings } = require('./fetchers/edgar');
 const { fetchPressReleases } = require('./fetchers/pressrelease');
 const { fetchCurrentsAPI }  = require('./fetchers/currents');
 const { fetchGNews }        = require('./fetchers/gnews');
-const { isBreaking, isRelevant, detectCompanies } = require('./fetchers/classify');
+const { isBreaking, isRelevant, detectCompanies, detectEventType } = require('./fetchers/classify');
 const { decodeEntities }    = require('./fetchers/decode');
 
 const app  = express();
@@ -322,6 +322,41 @@ function cleanupIrrelevantAPIArticles() {
   if (n > 0) console.log(`[DB] Removed ${n} irrelevant Currents/GNews articles`);
 }
 
+// ── Recompute is_breaking using title-only check ───────────────────────────
+// Clears stale flags set by the old description-inclusive isBreaking() logic.
+function recomputeBreakingFlags() {
+  const rows = db.prepare('SELECT id, title FROM articles WHERE is_breaking = 1').all();
+  if (!rows.length) return;
+  const clear = db.prepare('UPDATE articles SET is_breaking = 0 WHERE id = ?');
+  const tx = db.transaction(() => {
+    let n = 0;
+    for (const r of rows) {
+      if (!isBreaking(r.title, null)) { clear.run(r.id); n++; }
+    }
+    return n;
+  });
+  const n = tx();
+  if (n > 0) console.log(`[DB] Cleared stale is_breaking flag from ${n} articles`);
+}
+
+// ── Reclassify fundraising → ipo for articles saved before the split ───────
+function reclassifyIPOEventType() {
+  const rows = db.prepare(
+    `SELECT id, title, description FROM articles WHERE event_type = 'fundraising'`
+  ).all();
+  if (!rows.length) return;
+  const update = db.prepare(`UPDATE articles SET event_type = 'ipo' WHERE id = ?`);
+  const tx = db.transaction(() => {
+    let n = 0;
+    for (const r of rows) {
+      if (detectEventType(r.title, r.description) === 'ipo') { update.run(r.id); n++; }
+    }
+    return n;
+  });
+  const n = tx();
+  if (n > 0) console.log(`[DB] Reclassified ${n} fundraising articles as ipo`);
+}
+
 // ── Backfill is_breaking for articles fetched before this field existed ────
 function backfillBreaking() {
   const rows = db.prepare('SELECT id, title, description FROM articles WHERE is_breaking IS NULL').all();
@@ -341,6 +376,8 @@ app.listen(PORT, () => {
   console.log(`\nMarketPulse → http://localhost:${PORT}\n`);
   cleanupEntityEncoding();
   cleanupIrrelevantAPIArticles();
+  recomputeBreakingFlags();
+  reclassifyIPOEventType();
   backfillBreaking();
   const count = db.prepare('SELECT COUNT(*) as n FROM articles').get().n;
   if (count === 0) {

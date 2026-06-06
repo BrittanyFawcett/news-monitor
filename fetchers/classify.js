@@ -71,7 +71,9 @@ const EVENT_PATTERNS = [
     'to acquire', 'purchased by', 'all-cash deal',
   ]},
   { key: 'ipo', terms: [
-    'ipo', 'initial public offering', 'spac', 'goes public', 'public offering',
+    'ipo', 'initial public offering',
+    'spac merger', 'spac deal', 'via spac', 'blank check company',
+    'goes public', 'public offering',
     'stock market debut', 'files for ipo',
   ]},
   { key: 'fundraising', terms: [
@@ -180,7 +182,7 @@ const BREAKING_TRIGGERS = [
   'exploring acquisition', 'weighing acquisition', 'bid for', 'takeover bid', 'offered to buy',
   'agreed to buy', 'agrees to buy', 'billion deal', 'all-cash deal',
   // IPO / fundraising
-  'ipo', 'goes public', 'spac',
+  'ipo', 'goes public', 'spac merger', 'spac deal',
   // Regulatory actions
   'sec charges', 'cfpb fine', 'regulatory action', 'enforcement action', 'consent order',
   // Leadership crisis
