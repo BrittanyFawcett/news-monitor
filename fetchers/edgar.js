@@ -13,7 +13,7 @@ const TRACKED = [
   { name: 'Apple',           cik: '320193',  industry: 'big_tech_fintech' },
   { name: 'Visa',            cik: '1403161', industry: 'card_networks'    },
   { name: 'PayPal',          cik: '1633917', industry: 'payments'         },
-  { name: 'Coinbase',        cik: '1679788', industry: 'crypto'           },
+  { name: 'Coinbase',        cik: '1679788', industry: 'digital_assets'  },
   { name: 'Robinhood',       cik: '1783398', industry: 'brokerage'        },
   { name: 'SoFi',            cik: '1818502', industry: 'neobanks'         },
   { name: 'Rocket Companies',cik: '1805284', industry: 'mortgage_lending' },
@@ -81,8 +81,8 @@ async function fetchEDGARFilings() {
         const desc  = `8-K filing by ${data.name}. Filed: ${filingDate[i]}. ` +
                       (itemStr ? `Items: ${itemStr}.` : '');
 
-        const eventType    = itemsToEventType(itemStr) || detectEventType(title, desc);
-        const companiesStr = detectCompanies(title, desc).join(',') || co.name;
+        const eventType    = itemsToEventType(itemStr) || detectEventType(title, null, [co.name]);
+        const companiesStr = detectCompanies(title, null).join(',') || co.name;
         const breaking     = isBreaking(title, desc) ? 1 : 0;
 
         if (saveArticle({ title, description: desc, url,

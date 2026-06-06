@@ -45,7 +45,7 @@ async function fetchPressReleases() {
 
         const industry     = detectIndustry(companies, title, desc);
         if (!industry) continue;
-        const eventType    = detectEventType(title, desc);
+        const eventType    = detectEventType(title, desc, companies);
         const companiesStr = companies.join(',') || null;
         const breaking     = isBreaking(title, desc) ? 1 : 0;
 

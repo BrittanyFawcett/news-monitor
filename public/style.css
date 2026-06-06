@@ -34,7 +34,7 @@
   --c-neobanks:         #005050;
   --c-brokerage:        #6b4800;
   --c-mortgage_lending: #6b2800;
-  --c-crypto:           #2d006b;
+  --c-digital_assets:           #2d006b;
   --c-open_banking:     #303045;
 
   /* Breaking */
@@ -148,7 +148,7 @@ body {
 .filter-btn[data-value="neobanks"].active         { border-left-color: var(--c-neobanks); }
 .filter-btn[data-value="brokerage"].active        { border-left-color: var(--c-brokerage); }
 .filter-btn[data-value="mortgage_lending"].active { border-left-color: var(--c-mortgage_lending); }
-.filter-btn[data-value="crypto"].active           { border-left-color: var(--c-crypto); }
+.filter-btn[data-value="digital_assets"].active           { border-left-color: var(--c-digital_assets); }
 .filter-btn[data-value="open_banking"].active     { border-left-color: var(--c-open_banking); }
 
 .filter-label { flex: 1; }
@@ -170,7 +170,7 @@ body {
 .dot-neobanks         { background: var(--c-neobanks); }
 .dot-brokerage        { background: var(--c-brokerage); }
 .dot-mortgage_lending { background: var(--c-mortgage_lending); }
-.dot-crypto           { background: var(--c-crypto); }
+.dot-digital_assets           { background: var(--c-digital_assets); }
 .dot-open_banking     { background: var(--c-open_banking); }
 
 /* ── Select All button ────────────────────────────────────────── */
@@ -410,7 +410,7 @@ body {
 .industry-section[data-industry="neobanks"]         .industry-header { background: #005050; }
 .industry-section[data-industry="brokerage"]        .industry-header { background: #6b4800; }
 .industry-section[data-industry="mortgage_lending"] .industry-header { background: #6b2800; }
-.industry-section[data-industry="crypto"]           .industry-header { background: #2d006b; }
+.industry-section[data-industry="digital_assets"]           .industry-header { background: #2d006b; }
 .industry-section[data-industry="open_banking"]     .industry-header { background: #303045; }
 
 .industry-title {
@@ -465,7 +465,7 @@ body {
 .industry-section[data-industry="neobanks"]         .event-group-label { color: #005050; }
 .industry-section[data-industry="brokerage"]        .event-group-label { color: #6b4800; }
 .industry-section[data-industry="mortgage_lending"] .event-group-label { color: #6b2800; }
-.industry-section[data-industry="crypto"]           .event-group-label { color: #2d006b; }
+.industry-section[data-industry="digital_assets"]           .event-group-label { color: #2d006b; }
 .industry-section[data-industry="open_banking"]     .event-group-label { color: #303045; }
 
 
@@ -524,7 +524,7 @@ body {
 .badge-neobanks         { background: rgba(0,80,80,0.08); color: #005050; }
 .badge-brokerage        { background: rgba(107,72,0,0.08); color: #6b4800; }
 .badge-mortgage_lending { background: rgba(107,40,0,0.08); color: #6b2800; }
-.badge-crypto           { background: rgba(45,0,107,0.08); color: #2d006b; }
+.badge-digital_assets           { background: rgba(45,0,107,0.08); color: #2d006b; }
 .badge-open_banking     { background: rgba(48,48,69,0.08); color: #303045; }
 
 /* Event type badges */

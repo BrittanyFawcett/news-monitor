@@ -52,7 +52,7 @@ const FEEDS = {
   open_banking: [
     { url: 'https://www.bankingdive.com/feeds/news/',        name: 'Banking Dive' },
   ],
-  crypto: [
+  digital_assets: [
     { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', name: 'CoinDesk' },
     { url: 'https://cointelegraph.com/rss',                   name: 'CoinTelegraph' },
   ],
@@ -109,7 +109,7 @@ async function fetchRSSFeeds(industry) {
         // Use the company's canonical industry when known; fall back to the feed's industry
         const effectiveIndustry = (companies.length ? detectIndustry(companies, title, desc) : null) || industry;
 
-        const eventType    = detectEventType(title, desc);
+        const eventType    = detectEventType(title, desc, companies);
         const companiesStr = companies.join(',') || null;
         const breaking     = isBreaking(title, desc) ? 1 : 0;
         if (saveArticle({ title, description: desc, url: item.link,
@@ -141,7 +141,7 @@ async function fetchGlobalRSSFeeds() {
         if (!isRelevant(title, desc, companies)) continue;
         const industry     = detectIndustry(companies, title, desc);
         if (!industry) continue;
-        const eventType    = detectEventType(title, desc);
+        const eventType    = detectEventType(title, desc, companies);
         const companiesStr = companies.join(',') || null;
         const breaking     = isBreaking(title, desc) ? 1 : 0;
         if (saveArticle({ title, description: desc, url: item.link,

@@ -27,7 +27,7 @@ const ALL_COMPANIES = [
   { name: 'Finicity',         terms: ['finicity'] },
   { name: 'Yodlee',           terms: ['yodlee'] },
   { name: 'MX',               terms: ['mx technologies'] },
-  // Crypto
+  // Digital Assets
   { name: 'Coinbase',         terms: ['coinbase'] },
   { name: 'Kraken',           terms: ['kraken'] },
   { name: 'Crypto.com',       terms: ['crypto.com'] },
@@ -54,7 +54,7 @@ const COMPANY_GROUPS = {
   brokerage:        { label: 'Brokerage',            companies: ['Fidelity', 'Schwab', 'Vanguard', 'BlackRock', 'Robinhood'] },
   card_networks:    { label: 'Card Networks',        companies: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
   open_banking:     { label: 'Data & Open Banking', companies: ['Plaid', 'Finicity', 'Yodlee', 'MX'] },
-  crypto:           { label: 'Crypto',               companies: ['Coinbase', 'Kraken', 'Crypto.com', 'Binance'] },
+  digital_assets:   { label: 'Digital Assets',        companies: ['Coinbase', 'Kraken', 'Crypto.com', 'Binance'] },
   neobanks:         { label: 'Neobanks',             companies: ['Chime', 'SoFi', 'Revolut'] },
   bnpl:             { label: 'BNPL',                 companies: ['Klarna', 'Affirm', 'Afterpay'] },
   mortgage_lending: { label: 'Mortgage & Lending',  companies: ['Rocket Mortgage', 'LoanDepot', 'Better.com'] },
@@ -133,6 +133,8 @@ const TIER1_NAMES = [
   'visa', 'mastercard', 'american express', 'amex', 'discover',
   'plaid', 'finicity', 'yodlee',
   'coinbase', 'kraken', 'crypto.com', 'binance',
+  'xrp', 'solana', 'chainlink', 'uniswap', 'polkadot', 'arbitrum',
+  'okx', 'bitfinex', 'bybit', 'microstrategy', 'grayscale', 'galaxy digital',
   'chime', 'sofi', 'revolut',
   'klarna', 'affirm', 'afterpay',
   'rocket mortgage', 'loandepot', 'better.com',
@@ -155,9 +157,13 @@ const TIER2_KEYWORDS = [
   // Data & Open Banking
   'open banking', 'financial data aggregation', 'account linking',
   'api banking', 'consumer financial data',
-  // Crypto
+  // Digital Assets (tracked exchanges & tokens)
   'cryptocurrency', 'bitcoin', 'ethereum', 'blockchain', 'digital assets', 'crypto exchange',
   'defi', 'stablecoin', 'web3', 'crypto regulation',
+  'ripple', 'xrp', 'solana', 'sol token', 'chainlink', 'uniswap', 'tether',
+  'usdt', 'usdc', 'polkadot', 'arbitrum', 'gemini exchange', 'okx', 'bitfinex',
+  'bybit', 'microstrategy', 'grayscale bitcoin', 'galaxy digital',
+  'cardano', 'avalanche avax', 'polygon matic',
   // Neobanks
   'neobank', 'digital bank', 'challenger bank', 'mobile banking', 'fintech bank',
   // BNPL
@@ -265,10 +271,43 @@ function detectCompanies(title, description) {
   return [...found];
 }
 
-function detectEventType(title, description) {
-  const text = `${title || ''} ${description || ''}`.toLowerCase();
+// ── Leadership context detection ──────────────────────────────────────────
+const LEADERSHIP_ACTION_WORDS = [
+  'appointed', 'appoints', 'resigns', 'resigned', 'fired', 'ousted',
+  'stepping down', 'steps down', 'departure', 'successor', 'interim',
+  'joins as', 'named as', 'named chief', 'steps aside',
+];
+
+const LEADERSHIP_ROLE_WORDS = [
+  'ceo', 'cfo', 'coo', 'cto', 'chief executive', 'chief financial officer',
+  'president', 'chairman', 'board',
+];
+
+// Major banks and tech/AI companies not in ALL_COMPANIES that qualify for leadership tagging
+const LEADERSHIP_EXTRA_COMPANIES = [
+  'jpmorgan', 'jp morgan', 'goldman sachs', 'morgan stanley',
+  'bank of america', 'wells fargo', 'citigroup', 'citibank',
+  'nvidia', 'openai',
+];
+
+function isLeadershipEvent(title, companies = []) {
+  const lc = (title || '').toLowerCase();
+  if (!LEADERSHIP_ACTION_WORDS.some(w => lc.includes(w))) return false;
+  if (!LEADERSHIP_ROLE_WORDS.some(w => lc.includes(w))) return false;
+  if (companies.length > 0) return true;
+  return LEADERSHIP_EXTRA_COMPANIES.some(c => lc.includes(c));
+}
+
+// Title-only event type detection. Pass detected companies for leadership validation.
+function detectEventType(title, description = null, companies = []) {
+  const text = (title || '').toLowerCase();
   for (const { key, terms } of EVENT_PATTERNS) {
-    if (terms.some(t => text.includes(t))) return key;
+    if (!terms.some(t => text.includes(t))) continue;
+    if (key === 'leadership') {
+      if (isLeadershipEvent(title, companies)) return 'leadership';
+      continue; // doesn't qualify — keep checking lower-priority patterns
+    }
+    return key;
   }
   return null;
 }
@@ -303,7 +342,7 @@ const COMPANY_TO_INDUSTRY = {
   Visa: 'card_networks', Mastercard: 'card_networks',
   'American Express': 'card_networks', Discover: 'card_networks',
   Plaid: 'open_banking', Finicity: 'open_banking', Yodlee: 'open_banking', MX: 'open_banking',
-  Coinbase: 'crypto', Kraken: 'crypto', 'Crypto.com': 'crypto', Binance: 'crypto',
+  Coinbase: 'digital_assets', Kraken: 'digital_assets', 'Crypto.com': 'digital_assets', Binance: 'digital_assets',
   Chime: 'neobanks', SoFi: 'neobanks', Revolut: 'neobanks',
   Klarna: 'bnpl', Affirm: 'bnpl', Afterpay: 'bnpl',
   'Rocket Mortgage': 'mortgage_lending', LoanDepot: 'mortgage_lending', 'Better.com': 'mortgage_lending',
@@ -315,7 +354,12 @@ function detectIndustry(companies, title, description) {
     if (COMPANY_TO_INDUSTRY[co]) return COMPANY_TO_INDUSTRY[co];
   }
   const text = `${title || ''} ${description || ''}`.toLowerCase();
-  if (text.includes('crypto') || text.includes('bitcoin') || text.includes('blockchain') || text.includes('ethereum')) return 'crypto';
+  if (text.includes('crypto') || text.includes('bitcoin') || text.includes('blockchain') ||
+      text.includes('ethereum') || text.includes('ripple') || text.includes('xrp') ||
+      text.includes('solana') || text.includes('tether') || text.includes('usdt') ||
+      text.includes('usdc') || text.includes('defi') || text.includes('stablecoin') ||
+      text.includes('microstrategy') || text.includes('grayscale') || text.includes('digital asset'))
+    return 'digital_assets';
   if (text.includes('mortgage') || text.includes('home loan') || text.includes('heloc'))  return 'mortgage_lending';
   if (text.includes('credit card') || text.includes('card network') || text.includes('interchange')) return 'card_networks';
   if (text.includes('neobank') || text.includes('digital bank') || text.includes('challenger bank')) return 'neobanks';
@@ -330,5 +374,5 @@ function detectIndustry(companies, title, description) {
 module.exports = {
   ALL_COMPANIES, COMPANY_GROUPS, COMPANY_TO_INDUSTRY, EVENT_PATTERNS,
   TIER1_NAMES, TIER2_KEYWORDS, BREAKING_TRIGGERS,
-  detectCompanies, detectEventType, detectIndustry, isRelevant, isBreaking,
+  detectCompanies, detectEventType, detectIndustry, isRelevant, isBreaking, isLeadershipEvent,
 };

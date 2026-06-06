@@ -9,7 +9,7 @@ const { fetchEDGARFilings } = require('./fetchers/edgar');
 const { fetchPressReleases } = require('./fetchers/pressrelease');
 const { fetchCurrentsAPI }  = require('./fetchers/currents');
 const { fetchGNews }        = require('./fetchers/gnews');
-const { isBreaking, isRelevant, detectCompanies, detectEventType } = require('./fetchers/classify');
+const { isBreaking, isRelevant, detectCompanies, detectEventType, isLeadershipEvent } = require('./fetchers/classify');
 const { decodeEntities }    = require('./fetchers/decode');
 
 const app  = express();
@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3000;
 
 const INDUSTRIES = [
   'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
-  'neobanks', 'brokerage', 'mortgage_lending', 'crypto', 'open_banking',
+  'neobanks', 'brokerage', 'mortgage_lending', 'digital_assets', 'open_banking',
 ];
 
 const EVENT_TYPES = ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory'];
@@ -357,6 +357,33 @@ function reclassifyIPOEventType() {
   if (n > 0) console.log(`[DB] Reclassified ${n} fundraising articles as ipo`);
 }
 
+// ── Migrate crypto → digital_assets ───────────────────────────────────────
+function migrateCryptoToDigitalAssets() {
+  const { changes } = db.prepare(
+    `UPDATE articles SET industry = 'digital_assets' WHERE industry = 'crypto'`
+  ).run();
+  if (changes > 0) console.log(`[DB] Migrated ${changes} articles: crypto → digital_assets`);
+}
+
+// ── Remove leadership tag from articles that fail the new two-condition check ─
+function recomputeLeadershipTags() {
+  const rows = db.prepare(
+    `SELECT id, title, companies FROM articles WHERE event_type = 'leadership'`
+  ).all();
+  if (!rows.length) return;
+  const clear = db.prepare(`UPDATE articles SET event_type = NULL WHERE id = ?`);
+  const tx = db.transaction(() => {
+    let n = 0;
+    for (const r of rows) {
+      const companies = r.companies ? r.companies.split(',').filter(Boolean) : [];
+      if (!isLeadershipEvent(r.title, companies)) { clear.run(r.id); n++; }
+    }
+    return n;
+  });
+  const n = tx();
+  if (n > 0) console.log(`[DB] Cleared leadership tag from ${n} unqualified articles`);
+}
+
 // ── Backfill is_breaking for articles fetched before this field existed ────
 function backfillBreaking() {
   const rows = db.prepare('SELECT id, title, description FROM articles WHERE is_breaking IS NULL').all();
@@ -376,8 +403,10 @@ app.listen(PORT, () => {
   console.log(`\nMarketPulse → http://localhost:${PORT}\n`);
   cleanupEntityEncoding();
   cleanupIrrelevantAPIArticles();
+  migrateCryptoToDigitalAssets();
   recomputeBreakingFlags();
   reclassifyIPOEventType();
+  recomputeLeadershipTags();
   backfillBreaking();
   const count = db.prepare('SELECT COUNT(*) as n FROM articles').get().n;
   if (count === 0) {

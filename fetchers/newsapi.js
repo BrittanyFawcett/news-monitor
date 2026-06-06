@@ -13,7 +13,7 @@ const QUERIES = {
   brokerage:        'Fidelity OR "Charles Schwab" OR Vanguard OR BlackRock OR Robinhood',
   card_networks:    'Visa OR Mastercard OR "American Express" OR "Discover card"',
   open_banking:     'Plaid OR Finicity OR Yodlee OR "MX Technologies" OR "open banking" OR "open finance"',
-  crypto:           'Coinbase OR Kraken OR "Crypto.com" OR Binance OR cryptocurrency',
+  digital_assets:   'Coinbase OR Kraken OR "Crypto.com" OR Binance OR cryptocurrency',
   neobanks:         'Chime OR SoFi OR Revolut OR neobank',
   bnpl:             'Klarna OR Affirm OR Afterpay OR "buy now pay later" OR BNPL',
   mortgage_lending: '"Rocket Mortgage" OR "Rocket Companies" OR LoanDepot OR "Better.com" OR "Better Mortgage"',
@@ -48,7 +48,7 @@ async function fetchNewsAPI(industry) {
       const companies = detectCompanies(title, desc);
       if (!isRelevant(title, desc, companies)) continue;
       const sourceType   = PRESS_RELEASE_SOURCES.has(a.source?.name) ? 'press_release' : 'news';
-      const eventType    = detectEventType(title, desc);
+      const eventType    = detectEventType(title, desc, companies);
       const companiesStr = companies.join(',') || null;
       const breaking     = isBreaking(title, desc) ? 1 : 0;
       if (saveArticle({ title, description: desc, url: a.url, source_name: source,

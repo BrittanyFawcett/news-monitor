@@ -1,7 +1,7 @@
 /* ── Constants ──────────────────────────────────────────────────── */
 const ALL_INDUSTRIES = [
   'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
-  'neobanks', 'brokerage', 'mortgage_lending', 'crypto', 'open_banking',
+  'neobanks', 'brokerage', 'mortgage_lending', 'digital_assets', 'open_banking',
 ];
 const ALL_EVENT_TYPES = ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory', 'industry_news'];
 const ALL_SOURCES     = ['news', 'rss', 'filing', 'press_release'];
@@ -13,7 +13,7 @@ const INDUSTRY_LABELS = {
   brokerage:        'Brokerage & Asset Management',
   card_networks:    'Card Networks',
   open_banking:     'Data & Open Banking',
-  crypto:           'Crypto',
+  digital_assets:   'Digital Assets',
   neobanks:         'Neobanks',
   bnpl:             'Buy Now Pay Later',
   mortgage_lending: 'Mortgage & Lending',
@@ -46,7 +46,7 @@ const COMPANY_GROUPS = {
   neobanks:         { label: 'Neobanks',              companies: ['Chime', 'SoFi', 'Revolut'] },
   brokerage:        { label: 'Brokerage',             companies: ['Fidelity', 'Schwab', 'Vanguard', 'BlackRock', 'Robinhood'] },
   mortgage_lending: { label: 'Mortgage & Lending',   companies: ['Rocket Mortgage', 'LoanDepot', 'Better.com'] },
-  crypto:           { label: 'Crypto',                companies: ['Coinbase', 'Kraken', 'Crypto.com', 'Binance'] },
+  digital_assets:   { label: 'Digital Assets',         companies: ['Coinbase', 'Kraken', 'Crypto.com', 'Binance'] },
   open_banking:     { label: 'Data & Open Banking',  companies: ['Plaid', 'Finicity', 'Yodlee', 'MX'] },
 };
 
