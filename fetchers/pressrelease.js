@@ -44,6 +44,7 @@ async function fetchPressReleases() {
         if (!feed.trusted && !isRelevant(title, desc, companies)) continue;
 
         const industry     = detectIndustry(companies, title, desc);
+        if (!industry) continue;
         const eventType    = detectEventType(title, desc);
         const companiesStr = companies.join(',') || null;
         const breaking     = isBreaking(title, desc) ? 1 : 0;

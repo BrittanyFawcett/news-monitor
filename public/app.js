@@ -183,6 +183,7 @@ function companyTagsHtml(companies) {
 }
 
 function sectionCardHtml(a) {
+  if (!a.url) return '';
   const desc = a.description
     ? `<p class="card-description">${escapeHtml(a.description)}</p>`
     : '';
@@ -208,6 +209,7 @@ function sectionCardHtml(a) {
 }
 
 function breakingCardHtml(a) {
+  if (!a.url) return '';
   const industryLabel = (INDUSTRY_LABELS[a.industry] || a.industry).toUpperCase();
   const companies     = a.companies ? a.companies.split(',').filter(Boolean) : [];
   const topLine       = companies.length

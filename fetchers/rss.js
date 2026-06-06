@@ -108,9 +108,7 @@ async function fetchRSSFeeds(industry) {
         }
 
         // Use the company's canonical industry when known; fall back to the feed's industry
-        const effectiveIndustry = companies.length
-          ? detectIndustry(companies, title, desc)
-          : industry;
+        const effectiveIndustry = (companies.length ? detectIndustry(companies, title, desc) : null) || industry;
 
         const eventType    = detectEventType(title, desc);
         const companiesStr = companies.join(',') || null;
@@ -143,6 +141,7 @@ async function fetchGlobalRSSFeeds() {
         const companies = detectCompanies(title, desc);
         if (!isRelevant(title, desc, companies)) continue;
         const industry     = detectIndustry(companies, title, desc);
+        if (!industry) continue;
         const eventType    = detectEventType(title, desc);
         const companiesStr = companies.join(',') || null;
         const breaking     = isBreaking(title, desc) ? 1 : 0;

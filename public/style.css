@@ -478,6 +478,7 @@ body {
   text-decoration: none; color: inherit;
 }
 .article-card:hover { border-color: #aab0bf; background: #f8f9fb; }
+.article-card:hover .card-title { text-decoration: underline; text-underline-offset: 2px; }
 
 .card-body { flex: 1; min-width: 0; }
 

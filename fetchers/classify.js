@@ -1,7 +1,7 @@
 const ALL_COMPANIES = [
   // Big Tech Fintech
   { name: 'Apple',            terms: ['apple pay', 'apple card', 'apple wallet', 'apple cash', 'apple savings'] },
-  { name: 'Amazon',           terms: ['amazon pay', 'amazon lending', 'amazon one'] },
+  { name: 'Amazon',           terms: ['amazon pay', 'amazon lending', 'amazon one', 'amazon', 'amazon fintech', 'amazon finance', 'amazon banking'] },
   { name: 'Google',           terms: ['google pay', 'google wallet', 'google'] },
   { name: 'Microsoft',        terms: ['microsoft pay', 'microsoft financial'] },
   { name: 'Meta',             terms: ['meta pay', 'whatsapp pay', 'facebook pay'] },
@@ -170,7 +170,9 @@ const TIER2_KEYWORDS = [
 const BREAKING_TRIGGERS = [
   // M&A
   'merger', 'acquisition', 'acquires', 'acquired', 'takeover', 'buyout',
-  'to acquire', 'agreed to buy', 'agrees to buy', 'billion deal', 'all-cash deal',
+  'to acquire', 'to buy', 'in talks to buy', 'in talks to acquire',
+  'exploring acquisition', 'weighing acquisition', 'bid for', 'takeover bid', 'offered to buy',
+  'agreed to buy', 'agrees to buy', 'billion deal', 'all-cash deal',
   // IPO / fundraising
   'ipo', 'goes public', 'spac',
   // Regulatory actions
@@ -281,7 +283,7 @@ function detectIndustry(companies, title, description) {
   if (text.includes('brokerage') || text.includes('asset management') || text.includes(' etf ') || text.includes('wealth management')) return 'brokerage';
   if (text.includes('shopify') || text.includes('embedded finance') || text.includes('commerce platform')) return 'commerce';
   if (text.includes('digital wallet') || text.includes('apple pay') || text.includes('google pay')) return 'big_tech_fintech';
-  return 'payments'; // sensible default for financial press releases
+  return null;
 }
 
 module.exports = {
