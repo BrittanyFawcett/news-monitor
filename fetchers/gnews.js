@@ -52,6 +52,8 @@ async function fetchGNews(industry) {
     if (status === 429) console.warn(`[GNews] ${industry}: rate limit (429) — ${msg}`);
     else if (status === 403) console.warn(`[GNews] ${industry}: invalid API key (403)`);
     else console.error(`[GNews] ${industry}: ${status ? `HTTP ${status} — ` : ''}${msg}`);
+  } finally {
+    await new Promise(r => setTimeout(r, 1500));
   }
 }
 

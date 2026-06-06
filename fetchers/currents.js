@@ -4,16 +4,16 @@ const { detectCompanies, detectEventType, detectIndustry, isRelevant, isBreaking
 const { decodeEntities } = require('./decode');
 
 const QUERIES = {
-  big_tech_fintech: 'Apple Pay OR Apple Card OR Amazon Pay OR Google Pay OR Google Wallet OR Meta Pay',
-  payments:         'PayPal OR Venmo OR Stripe OR Cash App OR Adyen OR Bilt',
+  big_tech_fintech: '"Apple Pay" OR "Apple Card" OR "Amazon Pay" OR "Google Pay" OR "Google Wallet" OR "Meta Pay"',
+  payments:         'PayPal OR Venmo OR Stripe OR "Cash App" OR Adyen OR Bilt',
   brokerage:        'Fidelity OR Schwab OR Vanguard OR BlackRock OR Robinhood',
-  card_networks:    'Visa OR Mastercard OR American Express OR Discover card',
-  open_banking:     'Plaid OR Finicity OR Yodlee OR open banking OR open finance',
-  crypto:           'Coinbase OR Kraken OR Crypto.com OR Binance OR cryptocurrency',
+  card_networks:    'Visa OR Mastercard OR "American Express" OR "Discover card"',
+  open_banking:     'Plaid OR Finicity OR Yodlee OR "open banking" OR "open finance"',
+  crypto:           'Coinbase OR Kraken OR "Crypto.com" OR Binance OR cryptocurrency',
   neobanks:         'Chime OR SoFi OR Revolut OR neobank',
-  bnpl:             'Klarna OR Affirm OR Afterpay OR buy now pay later OR BNPL',
-  mortgage_lending: 'Rocket Mortgage OR Rocket Companies OR LoanDepot OR Better Mortgage',
-  commerce:         'Shopify OR embedded finance OR embedded banking OR Banking as a Service',
+  bnpl:             'Klarna OR Affirm OR Afterpay OR "buy now pay later" OR BNPL',
+  mortgage_lending: '"Rocket Mortgage" OR "Rocket Companies" OR LoanDepot OR "Better Mortgage"',
+  commerce:         'Shopify OR "embedded finance" OR "embedded banking" OR "Banking as a Service"',
 };
 
 async function fetchCurrentsAPI(industry) {
