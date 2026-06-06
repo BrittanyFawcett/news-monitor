@@ -9,7 +9,7 @@ const { fetchEDGARFilings } = require('./fetchers/edgar');
 const { fetchPressReleases } = require('./fetchers/pressrelease');
 const { fetchCurrentsAPI }  = require('./fetchers/currents');
 const { fetchGNews }        = require('./fetchers/gnews');
-const { isBreaking, isRelevant, detectCompanies, detectEventType, isLeadershipEvent } = require('./fetchers/classify');
+const { isBreaking, isRelevant, detectCompanies, detectIndustry, detectEventType, isLeadershipEvent } = require('./fetchers/classify');
 const { decodeEntities }    = require('./fetchers/decode');
 
 const app  = express();
@@ -384,6 +384,29 @@ function recomputeLeadershipTags() {
   if (n > 0) console.log(`[DB] Cleared leadership tag from ${n} unqualified articles`);
 }
 
+// ── Remove Visa false positives saved before exclusion fix ────────────────
+function removeVisaFalsePositives() {
+  const rows = db.prepare(
+    `SELECT id, title, description, companies, industry FROM articles WHERE ',' || companies || ',' LIKE '%,Visa,%'`
+  ).all();
+  if (!rows.length) return;
+  const update = db.prepare(`UPDATE articles SET companies = ?, industry = ? WHERE id = ?`);
+  const tx = db.transaction(() => {
+    let n = 0;
+    for (const r of rows) {
+      const redetected = detectCompanies(r.title, r.description);
+      if (redetected.includes('Visa')) continue;
+      const newCompanies = redetected.join(',');
+      const newIndustry  = detectIndustry(redetected, r.title, r.description);
+      update.run(newCompanies, newIndustry, r.id);
+      n++;
+    }
+    return n;
+  });
+  const n = tx();
+  if (n > 0) console.log(`[DB] Removed Visa false positives from ${n} articles`);
+}
+
 // ── Backfill is_breaking for articles fetched before this field existed ────
 function backfillBreaking() {
   const rows = db.prepare('SELECT id, title, description FROM articles WHERE is_breaking IS NULL').all();
@@ -407,6 +430,7 @@ app.listen(PORT, () => {
   recomputeBreakingFlags();
   reclassifyIPOEventType();
   recomputeLeadershipTags();
+  removeVisaFalsePositives();
   backfillBreaking();
   const count = db.prepare('SELECT COUNT(*) as n FROM articles').get().n;
   if (count === 0) {
