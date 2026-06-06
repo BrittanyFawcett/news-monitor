@@ -236,12 +236,16 @@ const VISA_EXCLUSION_TERMS = [
   'visa application', 'visa requirements', 'visa fee', 'visa program',
   'visa waiver', 'visa holder', 'visa status', 'visa process',
   'embassy', 'passport', 'green card', 'immigration reform', 'foreign worker',
-  'deportation', 'border', 'citizenship', 'naturalization',
-  'asylum', 'refugee', 'undocumented',
+  'deportation', 'deported', 'deport ', 'deportee',
+  'overstay', 'overstayed', 'visa overstay', 'visa ban', 'visa restriction',
+  'visa revok', 'visa suspend', 'visa denial', 'visa denied',
+  'border', 'citizenship', 'naturalization',
+  'asylum', 'refugee', 'undocumented', 'foreign national',
   'f1 visa', 'l1 visa', 'o1 visa', 'eb-5', 'eb5',
   'specialty occupation', 'cap-exempt',
-  // Sports / events (FIFA is a Mastercard/Visa sponsor — the sponsor name must not match)
+  // Sports / events (Visa sponsors FIFA and F1 teams — the sponsor name must not match)
   'world cup', 'fifa', 'soccer', 'football tournament', 'olympic',
+  'formula 1', 'formula one', 'racing bulls', 'cash app rb',
 ];
 
 const VISA_CONTEXT_WINDOW = 120;

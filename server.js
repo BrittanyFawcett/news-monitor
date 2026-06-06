@@ -387,13 +387,16 @@ function recomputeLeadershipTags() {
 // ── Remove Visa false positives saved before exclusion fix ────────────────
 function removeVisaFalsePositives() {
   const rows = db.prepare(
-    `SELECT id, title, description, companies, industry FROM articles WHERE ',' || companies || ',' LIKE '%,Visa,%'`
+    `SELECT id, title, description, companies, industry FROM articles WHERE companies LIKE '%Visa%'`
   ).all();
   if (!rows.length) return;
   const update = db.prepare(`UPDATE articles SET companies = ?, industry = ? WHERE id = ?`);
   const tx = db.transaction(() => {
     let n = 0;
     for (const r of rows) {
+      // LIKE '%Visa%' is broad; confirm Visa is actually in the stored list
+      const stored = (r.companies || '').split(',').map(c => c.trim());
+      if (!stored.includes('Visa')) continue;
       const redetected = detectCompanies(r.title, r.description);
       if (redetected.includes('Visa')) continue;
       const newCompanies = redetected.join(',');
