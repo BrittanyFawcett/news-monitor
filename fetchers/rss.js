@@ -17,6 +17,19 @@ const parser = new Parser({
   customFields: { item: ['media:content', 'media:thumbnail', ['media:content', 'mediaContent']] },
 });
 
+// Broad financial publications fetched once per run; detectIndustry() assigns each article.
+// Processed with a higher item limit (25) since filtering is heavy.
+const GLOBAL_FEEDS = [
+  { url: 'https://feeds.bloomberg.com/markets/news.rss',                       name: 'Bloomberg Markets' },
+  { url: 'https://feeds.content.dowjones.io/public/rss/mw_marketpulse',        name: 'WSJ MarketPulse' },
+  { url: 'https://www.ft.com/rss/home',                                        name: 'Financial Times' },
+  { url: 'https://api.axios.com/feed/',                                        name: 'Axios' },
+  { url: 'https://www.theblock.co/rss.xml',                                    name: 'The Block' },
+  { url: 'https://seekingalpha.com/feed.xml',                                  name: 'Seeking Alpha' },
+  { url: 'https://feeds.businessinsider.com/custom/all',                       name: 'Business Insider' },
+  { url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories',         name: 'MarketWatch' },
+];
+
 const FEEDS = {
   big_tech_fintech: [
     { url: 'https://techcrunch.com/category/fintech/feed/', name: 'TechCrunch Fintech' },
@@ -117,4 +130,34 @@ async function fetchRSSFeeds(industry) {
   }
 }
 
-module.exports = { fetchRSSFeeds };
+async function fetchGlobalRSSFeeds() {
+  for (const feed of GLOBAL_FEEDS) {
+    try {
+      const parsed = await parser.parseURL(feed.url);
+      let count = 0;
+      for (const item of (parsed.items || []).slice(0, 25)) {
+        if (!item.title || !item.link) continue;
+        const title  = decodeEntities(item.title);
+        const desc   = decodeEntities(item.contentSnippet || item.summary || null);
+        const author = decodeEntities(item.creator || item.author || null);
+        const companies = detectCompanies(title, desc);
+        if (!isRelevant(title, desc, companies)) continue;
+        const industry     = detectIndustry(companies, title, desc);
+        const eventType    = detectEventType(title, desc);
+        const companiesStr = companies.join(',') || null;
+        const breaking     = isBreaking(title, desc) ? 1 : 0;
+        if (saveArticle({ title, description: desc, url: item.link,
+                          source_name: feed.name, source_type: 'rss',
+                          industry, published_at: toISO(item.isoDate || item.pubDate),
+                          author, image_url: extractImage(item),
+                          event_type: eventType, companies: companiesStr,
+                          is_breaking: breaking })) count++;
+      }
+      console.log(`[RSS] ${feed.name}: +${count}`);
+    } catch (err) {
+      console.error(`[RSS] ${feed.name}: ${err.message}`);
+    }
+  }
+}
+
+module.exports = { fetchRSSFeeds, fetchGlobalRSSFeeds };

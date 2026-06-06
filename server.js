@@ -4,7 +4,7 @@ const cron    = require('node-cron');
 const path    = require('path');
 const db      = require('./db');
 const { fetchNewsAPI }      = require('./fetchers/newsapi');
-const { fetchRSSFeeds }     = require('./fetchers/rss');
+const { fetchRSSFeeds, fetchGlobalRSSFeeds } = require('./fetchers/rss');
 const { fetchEDGARFilings } = require('./fetchers/edgar');
 const { fetchPressReleases } = require('./fetchers/pressrelease');
 const { fetchCurrentsAPI }  = require('./fetchers/currents');
@@ -47,6 +47,9 @@ async function runAllFetchers() {
     await fetchCurrentsAPI(industry);
     await fetchGNews(industry);
   }
+
+  // Global financial publications — fetched once, industry assigned per article
+  await fetchGlobalRSSFeeds();
 
   // Company-specific: SEC EDGAR 8-K filings (CIK-based, runs once)
   await fetchEDGARFilings();
