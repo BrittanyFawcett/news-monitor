@@ -7,7 +7,9 @@ const { fetchNewsAPI }      = require('./fetchers/newsapi');
 const { fetchRSSFeeds }     = require('./fetchers/rss');
 const { fetchEDGARFilings } = require('./fetchers/edgar');
 const { fetchPressReleases } = require('./fetchers/pressrelease');
-const { isBreaking }        = require('./fetchers/classify');
+const { fetchCurrentsAPI }  = require('./fetchers/currents');
+const { fetchGNews }        = require('./fetchers/gnews');
+const { isBreaking, isRelevant, detectCompanies } = require('./fetchers/classify');
 const { decodeEntities }    = require('./fetchers/decode');
 
 const app  = express();
@@ -38,10 +40,12 @@ async function runAllFetchers() {
   isFetching = true;
   console.log('\n[Fetch] Starting...');
 
-  // Per-industry: NewsAPI + RSS feeds
+  // Per-industry: NewsAPI + RSS + Currents + GNews
   for (const industry of INDUSTRIES) {
     await fetchNewsAPI(industry);
     await fetchRSSFeeds(industry);
+    await fetchCurrentsAPI(industry);
+    await fetchGNews(industry);
   }
 
   // Company-specific: SEC EDGAR 8-K filings (CIK-based, runs once)
@@ -255,6 +259,8 @@ app.get('/api/status', (_req, res) => {
       COUNT(CASE WHEN source_type = 'rss'           THEN 1 END) AS rss_count,
       COUNT(CASE WHEN source_type = 'filing'        THEN 1 END) AS filing_count,
       COUNT(CASE WHEN source_type = 'press_release' THEN 1 END) AS press_release_count,
+      COUNT(CASE WHEN source_type = 'currents'      THEN 1 END) AS currents_count,
+      COUNT(CASE WHEN source_type = 'gnews'         THEN 1 END) AS gnews_count,
       ${industryCols},
       ${eventCols}
     FROM articles
@@ -292,6 +298,25 @@ function cleanupEntityEncoding() {
   if (n > 0) console.log(`[DB] Decoded HTML entities in ${n} articles`);
 }
 
+// ── Purge irrelevant articles from Currents and GNews sources ─────────────
+function cleanupIrrelevantAPIArticles() {
+  const rows = db.prepare(
+    `SELECT id, title, description FROM articles WHERE source_type IN ('currents', 'gnews')`
+  ).all();
+  if (!rows.length) return;
+  const del = db.prepare('DELETE FROM articles WHERE id = ?');
+  const tx  = db.transaction(() => {
+    let n = 0;
+    for (const r of rows) {
+      const companies = detectCompanies(r.title, r.description);
+      if (!isRelevant(r.title, r.description, companies)) { del.run(r.id); n++; }
+    }
+    return n;
+  });
+  const n = tx();
+  if (n > 0) console.log(`[DB] Removed ${n} irrelevant Currents/GNews articles`);
+}
+
 // ── Backfill is_breaking for articles fetched before this field existed ────
 function backfillBreaking() {
   const rows = db.prepare('SELECT id, title, description FROM articles WHERE is_breaking IS NULL').all();
@@ -310,6 +335,7 @@ function backfillBreaking() {
 app.listen(PORT, () => {
   console.log(`\nMarketPulse → http://localhost:${PORT}\n`);
   cleanupEntityEncoding();
+  cleanupIrrelevantAPIArticles();
   backfillBreaking();
   const count = db.prepare('SELECT COUNT(*) as n FROM articles').get().n;
   if (count === 0) {
