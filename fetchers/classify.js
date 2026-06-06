@@ -219,20 +219,29 @@ const AMBIGUOUS_SINGLE_TERMS = new Set([
 ]);
 
 // ── Visa context detection ────────────────────────────────────────────────
-// Bare 'visa' requires a nearby financial term and no immigration signal.
+// Bare 'visa' requires a nearby payment-specific term and no immigration/sports signal.
 const VISA_FINANCIAL_TERMS = [
-  'payment', 'card', 'network', 'mastercard', 'transaction', 'checkout',
-  'merchant', 'interchange', 'token', 'tokenization', 'contactless',
-  'debit', 'credit', 'fintech', 'financial', 'banking', 'settlement',
-  'acquiring', 'issuing', 'pos', 'point of sale',
+  'payment network', 'payment processing', 'card network', 'card payment',
+  'mastercard', 'transaction', 'checkout', 'merchant', 'interchange',
+  'tokenization', 'contactless', 'debit card', 'credit card', 'fintech',
+  'acquiring', 'issuing', 'point of sale', 'payment rail',
 ];
 
 const VISA_EXCLUSION_TERMS = [
-  'h1b', 'h-1b', 'immigration', 'work visa', 'student visa', 'tourist visa',
-  'travel visa', 'visa application', 'visa requirements', 'visa fee',
+  // H-1B and variants
+  'h1b', 'h-1b', 'h1-b', 'h 1b', 'h.1b',
+  // Immigration / travel documents
+  'immigration', 'immigrant', 'immigrants', 'migrate', 'migration',
+  'work visa', 'student visa', 'tourist visa', 'travel visa',
+  'visa application', 'visa requirements', 'visa fee', 'visa program',
+  'visa waiver', 'visa holder', 'visa status', 'visa process',
   'embassy', 'passport', 'green card', 'immigration reform', 'foreign worker',
-  'sponsorship', 'deportation', 'border', 'citizenship', 'naturalization',
-  'f1 visa', 'l1 visa', 'o1 visa',
+  'deportation', 'border', 'citizenship', 'naturalization',
+  'asylum', 'refugee', 'undocumented',
+  'f1 visa', 'l1 visa', 'o1 visa', 'eb-5', 'eb5',
+  'specialty occupation', 'cap-exempt',
+  // Sports / events (FIFA is a Mastercard/Visa sponsor — the sponsor name must not match)
+  'world cup', 'fifa', 'soccer', 'football tournament', 'olympic',
 ];
 
 const VISA_CONTEXT_WINDOW = 120;
