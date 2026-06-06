@@ -3,7 +3,7 @@ const ALL_INDUSTRIES = [
   'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
   'neobanks', 'brokerage', 'mortgage_lending', 'crypto', 'open_banking',
 ];
-const ALL_EVENT_TYPES = ['ma_fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory', 'industry_news'];
+const ALL_EVENT_TYPES = ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory', 'industry_news'];
 const ALL_SOURCES     = ['news', 'rss', 'filing', 'press_release'];
 const LIMIT           = 15;
 
@@ -21,18 +21,15 @@ const INDUSTRY_LABELS = {
 };
 
 const EVENT_TYPE_LABELS = {
-  // UI compound key
-  ma_fundraising: 'M&A / Fundraising',
   // UI + DB keys
+  ma:             'M&A',
+  ipo:            'IPO',
+  fundraising:    'Fundraising',
   earnings:       'Earnings',
   partnerships:   'Partnerships',
   product_launch: 'Product Launch',
   leadership:     'Leadership',
   regulatory:     'Regulatory',
-  // DB-only keys (used in breaking/section card badges)
-  ma:             'M&A',
-  ipo:            'IPO',
-  fundraising:    'Fundraising',
   industry_news:  'Industry News',
 };
 
@@ -123,8 +120,7 @@ function buildFilterParams() {
   if (state.eventTypes.size > 0) {
     const apiTypes = new Set();
     for (const t of state.eventTypes) {
-      if (t === 'ma_fundraising') { apiTypes.add('ma'); apiTypes.add('ipo'); apiTypes.add('fundraising'); }
-      else if (t === 'industry_news') { apiTypes.add('none'); }
+      if (t === 'industry_news') { apiTypes.add('none'); }
       else apiTypes.add(t);
     }
     params.set('event_type', [...apiTypes].join(','));
@@ -440,11 +436,7 @@ async function refreshStatus() {
       const el = document.getElementById(`cnt-${ind}`);
       if (el) el.textContent = data[`${ind}_count`]?.toLocaleString() ?? '—';
     }
-    // Combined M&A + Fundraising count
-    const mafEl = document.getElementById('cnt-ma_fundraising');
-    if (mafEl) mafEl.textContent = ((data.ma_count || 0) + (data.ipo_count || 0) + (data.fundraising_count || 0)).toLocaleString();
-    // Individual event type counts
-    for (const et of ['earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory', 'industry_news']) {
+    for (const et of ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory', 'industry_news']) {
       const el = document.getElementById(`cnt-${et}`);
       if (el) el.textContent = data[`${et}_count`]?.toLocaleString() ?? '—';
     }

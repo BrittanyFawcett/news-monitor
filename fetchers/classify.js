@@ -287,8 +287,8 @@ function isRelevant(title, description, companies) {
 }
 
 function isBreaking(title, description) {
-  const text = `${title || ''} ${description || ''}`.toLowerCase();
-  return BREAKING_TRIGGERS.some(t => text.includes(t));
+  const titleLower = (title || '').toLowerCase();
+  return BREAKING_TRIGGERS.some(t => titleLower.includes(t));
 }
 
 // Maps a detected company name to its primary industry
