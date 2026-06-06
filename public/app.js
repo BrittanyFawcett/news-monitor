@@ -235,6 +235,26 @@ function breakingCardHtml(a) {
 function renderBreakingSection(articles) {
   const section = document.createElement('section');
   section.className = 'breaking-section';
+
+  // Group by industry, preserving sidebar order
+  const groups = {};
+  for (const a of articles) {
+    if (!groups[a.industry]) groups[a.industry] = [];
+    groups[a.industry].push(a);
+  }
+  const orderedIndustries = ALL_INDUSTRIES.filter(i => groups[i]);
+
+  const groupsHtml = orderedIndustries.map(ind => {
+    const label = (INDUSTRY_LABELS[ind] || ind).toUpperCase();
+    return `
+      <div class="breaking-industry-group">
+        <div class="breaking-industry-divider">${escapeHtml(label)}</div>
+        <div class="breaking-feed">
+          ${groups[ind].map(breakingCardHtml).join('')}
+        </div>
+      </div>`;
+  }).join('');
+
   section.innerHTML = `
     <div class="breaking-header">
       <div class="breaking-badge">
@@ -245,9 +265,7 @@ function renderBreakingSection(articles) {
       </div>
       <span class="breaking-desc">High-impact events from tracked companies</span>
     </div>
-    <div class="breaking-feed">
-      ${articles.map(breakingCardHtml).join('')}
-    </div>`;
+    ${groupsHtml}`;
   return section;
 }
 

@@ -75,9 +75,9 @@ const EVENT_PATTERNS = [
     'stock market debut', 'files for ipo',
   ]},
   { key: 'fundraising', terms: [
-    'funding round', 'series a', 'series b', 'series c', 'series d', 'series e',
-    'raises $', 'raised $', 'venture capital', 'seed round', 'pre-ipo',
-    'credit facility', 'debt financing', 'valuation',
+    'raises $', 'raised $', 'funding round',
+    'series a', 'series b', 'series c', 'series d',
+    'venture capital', 'seed round', 'credit facility', 'debt financing',
   ]},
   // Earnings: use compound / specific phrases — avoid standalone 'revenue'/'profit'
   // which appear in almost every financial article description

@@ -22,8 +22,9 @@ const INDUSTRIES = [
 
 const EVENT_TYPES = ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory'];
 
-// Breaking news: event types that signal high-impact financial events
-const BREAKING_EVENT_TYPES = ['ma', 'ipo', 'fundraising', 'earnings', 'leadership', 'regulatory'];
+// Event types that qualify an article for Breaking News (product_launch and
+// fundraising excluded — too noisy; fundraising breaking articles surface via ma/ipo)
+const BREAKING_EVENT_TYPES = ['ma', 'ipo', 'earnings', 'leadership', 'regulatory'];
 
 // Order in which event types are displayed within each industry section
 const EVENT_TYPE_ORDER = ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory'];
@@ -121,8 +122,9 @@ app.get('/api/feed', (req, res) => {
     // ── Breaking news — uses is_breaking flag set at fetch time ────────────
     let breaking = [];
     {
-      const bConds  = [...base, 'is_breaking = 1'];
-      const bParams = [...baseParams];
+      const bConds  = [...base, 'is_breaking = 1',
+        `event_type IN (${BREAKING_EVENT_TYPES.map(() => '?').join(',')})`];
+      const bParams = [...baseParams, ...BREAKING_EVENT_TYPES];
 
       if (activeEventTypes) applyEventTypeFilter(activeEventTypes, bConds, bParams);
 

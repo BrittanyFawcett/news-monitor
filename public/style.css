@@ -331,6 +331,20 @@ body {
   gap: 8px;
 }
 
+/* ── Breaking Industry Groups ─────────────────────────────────── */
+.breaking-industry-group { padding: 0 0 4px; }
+
+.breaking-industry-divider {
+  font-size: 9px; font-weight: 800; letter-spacing: 0.14em;
+  color: #b0003a; text-transform: uppercase;
+  padding: 7px 14px 5px;
+  border-bottom: 1px solid #e0b0bc;
+  display: flex; align-items: center; gap: 8px;
+}
+.breaking-industry-divider::after {
+  content: ''; flex: 1; height: 1px; background: #e0b0bc;
+}
+
 /* ── Breaking Cards ───────────────────────────────────────────── */
 .breaking-card {
   width: 100%;
