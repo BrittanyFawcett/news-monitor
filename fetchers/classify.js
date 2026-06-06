@@ -130,7 +130,7 @@ const TIER1_NAMES = [
   'apple', 'amazon', 'google', 'microsoft', 'meta',
   'paypal', 'stripe', 'block', 'square', 'bilt', 'adyen',
   'fidelity', 'schwab', 'vanguard', 'blackrock', 'robinhood',
-  'visa', 'mastercard', 'american express', 'amex', 'discover',
+  'mastercard', 'american express', 'amex', 'discover',
   'plaid', 'finicity', 'yodlee',
   'coinbase', 'kraken', 'crypto.com', 'binance',
   'xrp', 'solana', 'chainlink', 'uniswap', 'polkadot', 'arbitrum',
