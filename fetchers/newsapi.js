@@ -8,6 +8,7 @@ const PRESS_RELEASE_SOURCES = new Set([
 ]);
 
 const QUERIES = {
+  big_banks:        '"Citigroup" OR "Citibank" OR "Wells Fargo" OR "Bank of America" OR "PNC Financial" OR "PNC Bank" OR "Truist" OR "U.S. Bancorp" OR "U.S. Bank"',
   big_tech_fintech: '"Apple Pay" OR "Apple Card" OR "Amazon Pay" OR "Google Pay" OR "Google Wallet" OR "Meta Pay" OR "WhatsApp Pay" OR "Microsoft fintech"',
   payments:         'PayPal OR Venmo OR Stripe OR "Cash App" OR Adyen OR "Bilt Rewards"',
   brokerage:        'Fidelity OR "Charles Schwab" OR Vanguard OR BlackRock OR Robinhood',

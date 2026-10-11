@@ -1,6 +1,6 @@
 /* ── Constants ──────────────────────────────────────────────────── */
 const ALL_INDUSTRIES = [
-  'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
+  'big_banks', 'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
   'neobanks', 'brokerage', 'mortgage_lending', 'digital_assets', 'open_banking',
 ];
 const ALL_EVENT_TYPES = ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory', 'industry_news'];
@@ -8,6 +8,7 @@ const ALL_SOURCES     = ['news', 'rss', 'filing', 'press_release'];
 const LIMIT           = 15;
 
 const INDUSTRY_LABELS = {
+  big_banks:        'Big Banks',
   big_tech_fintech: 'Big Tech',
   payments:         'Payments',
   brokerage:        'Brokerage & Asset Management',
@@ -38,6 +39,7 @@ const SOURCE_LABELS = {
 };
 
 const COMPANY_GROUPS = {
+  big_banks:        { label: 'Big Banks',             companies: ['Citi', 'Wells Fargo', 'Bank of America', 'PNC', 'Truist', 'U.S. Bank'] },
   big_tech_fintech: { label: 'Big Tech',             companies: ['Apple', 'Amazon', 'Google', 'Microsoft', 'Meta'] },
   card_networks:    { label: 'Card Networks',         companies: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
   payments:         { label: 'Payments',              companies: ['PayPal', 'Stripe', 'Block', 'Bilt', 'Adyen'] },
@@ -58,6 +60,7 @@ const state = {
   datePreset:      '7d',
   search:          '',
   selectedCompany: null,
+  showHidden:      false,
   loading:         false,
 };
 
@@ -136,6 +139,7 @@ function buildFilterParams() {
 
   if (state.search.trim()) params.set('search', state.search.trim());
   if (state.selectedCompany) params.set('company', state.selectedCompany);
+  if (state.showHidden) params.set('hidden', '1');
 
   return params;
 }
@@ -165,6 +169,7 @@ function updateFilterSummary() {
   parts.push(presetLabels[state.datePreset] || '');
 
   if (state.search.trim()) parts.push(`"${state.search.trim()}"`);
+  if (state.showHidden) parts.unshift('Hidden articles');
 
   filterSummary.textContent = parts.filter(Boolean).join(' · ');
 }
@@ -179,26 +184,45 @@ function companyTagsHtml(companies) {
   ).join('')}</div>`;
 }
 
+// The "Flag as irrelevant" switch. Lives inside the card link, so clicks are
+// intercepted (preventDefault) by the delegated handler further down.
+function flagToggleHtml(a) {
+  const on    = a.irrelevant === 1 || a.irrelevant === 2;
+  const label = a.irrelevant === 2 ? 'Hidden automatically'
+              : a.irrelevant === 1 ? 'Flagged as irrelevant'
+              : 'Flag as irrelevant';
+  const title = on ? 'Switch off to restore this article to your feed'
+                   : 'Hide this article and teach the dashboard to hide similar ones';
+  return `<button type="button" class="flag-toggle" data-id="${a.id}" aria-pressed="${on}" title="${title}">
+      <span class="flag-switch" aria-hidden="true"></span><span class="flag-label">${label}</span>
+    </button>`;
+}
+
 function sectionCardHtml(a) {
   if (!a.url) return '';
   const desc = a.description
     ? `<p class="card-description">${escapeHtml(a.description)}</p>`
     : '';
+  const reason = (a.irrelevant === 2 && a.hidden_reason)
+    ? `<p class="card-hidden-reason">${escapeHtml(a.hidden_reason)}</p>`
+    : '';
   const img = a.image_url
     ? `<div class="card-image"><img src="${escapeHtml(a.image_url)}" alt="" loading="lazy" onerror="this.parentElement.remove()"></div>`
     : '';
   return `
-    <a class="article-card" href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer">
+    <a class="article-card" data-id="${a.id}" href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer">
       <div class="card-body">
         <div class="card-meta">
           <span class="badge badge-${a.source_type}">${SOURCE_LABELS[a.source_type] || a.source_type}</span>
           <span class="card-time">${timeAgo(a.published_at)}</span>
         </div>
         <h3 class="card-title">${escapeHtml(a.title)}</h3>
+        ${reason}
         ${desc}
         ${companyTagsHtml(a.companies)}
         <div class="card-footer">
           <span class="card-source">${escapeHtml(a.source_name || '')}</span>
+          ${flagToggleHtml(a)}
         </div>
       </div>
       ${img}
@@ -216,13 +240,13 @@ function breakingCardHtml(a) {
   const evtHtml = `<div class="breaking-evt-row"><span class="breaking-evt-tag">${evtLabel}</span></div>`;
   const timeStr = a.published_at ? ` · ${timeAgo(a.published_at)}` : '';
   return `
-    <a class="breaking-card" href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer">
+    <a class="breaking-card" data-id="${a.id}" href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer">
       <div class="breaking-card-body">
         <div class="breaking-card-top">${escapeHtml(topLine)}</div>
         ${evtHtml}
         <div class="breaking-card-divider"></div>
         <div class="breaking-card-title">${escapeHtml(a.title)}</div>
-        <div class="breaking-card-footer">${escapeHtml(a.source_name || '')}${timeStr}</div>
+        <div class="breaking-card-footer"><span>${escapeHtml(a.source_name || '')}${timeStr}</span>${flagToggleHtml(a)}</div>
       </div>
     </a>`;
 }
@@ -280,7 +304,7 @@ function renderIndustrySection({ industry, total, eventGroups, general }) {
   const groupsHtml = eventGroups.map(({ eventType, articles }) => `
     <div class="event-group">
       <div class="event-group-header event-group-toggle">
-        <span class="event-group-label">${EVENT_TYPE_LABELS[eventType] || eventType} (${articles.length})</span>
+        <span class="event-group-label" data-label="${EVENT_TYPE_LABELS[eventType] || eventType}">${EVENT_TYPE_LABELS[eventType] || eventType} (${articles.length})</span>
         <svg class="event-group-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
@@ -293,7 +317,7 @@ function renderIndustrySection({ industry, total, eventGroups, general }) {
   const generalHtml = (general.length > 0 || hasMore)
     ? `<div class="event-group">
         <div class="event-group-header event-group-toggle">
-          <span class="event-group-label">Industry News (${general.length})</span>
+          <span class="event-group-label" data-label="Industry News">Industry News (${general.length})</span>
           <svg class="event-group-arrow" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="6 9 12 15 18 9"/>
           </svg>
@@ -398,8 +422,14 @@ async function loadFeed() {
     resultCount.textContent = (data.total || 0).toLocaleString();
     updateFilterSummary();
 
+    if (state.showHidden) feedContent.appendChild(await renderHiddenBanner());
+
     if (data.breaking.length === 0 && data.sections.length === 0) {
       emptyState.classList.remove('hidden');
+      if (state.showHidden) {
+        emptyMsg.textContent = 'Nothing is hidden for these filters.';
+        return;
+      }
       const hasFilters = state.industries.size < ALL_INDUSTRIES.length
         || state.sourceTypes.size < ALL_SOURCES.length
         || state.eventTypes.size > 0
@@ -440,6 +470,9 @@ async function refreshStatus() {
       const el = document.getElementById(`cnt-${et}`);
       if (el) el.textContent = data[`${et}_count`]?.toLocaleString() ?? '—';
     }
+    const hiddenEl = document.getElementById('cnt-hidden');
+    if (hiddenEl) hiddenEl.textContent = ((data.flagged_count || 0) + (data.auto_hidden_count || 0)).toLocaleString();
+
     const srcMap = { news: data.news_count, rss: data.rss_count, filing: data.filing_count, press_release: data.press_release_count };
     for (const [k, v] of Object.entries(srcMap)) {
       const el = document.getElementById(`cnt-${k}`);
@@ -619,6 +652,156 @@ async function triggerFetch() {
 
 fetchBtn.addEventListener('click', triggerFetch);
 document.getElementById('empty-fetch-btn').addEventListener('click', triggerFetch);
+
+/* ── Hidden view ────────────────────────────────────────────────── */
+async function renderHiddenBanner() {
+  const banner = document.createElement('div');
+  banner.className = 'hidden-banner';
+  let learned = '';
+  try {
+    const res  = await fetch('/api/learning');
+    const data = await res.json();
+    if (data.terms && data.terms.length) {
+      learned = `<div><strong>Learned so far:</strong> articles are hidden when they share two or more of these with one article you flagged.</div>
+        <div class="learned-terms">${data.terms.map(t =>
+          `<span class="company-tag" title="Appears in ${t.flagged} flagged articles">${escapeHtml(t.term)}</span>`).join('')}</div>`;
+    } else {
+      learned = `<div>Nothing learned yet. The dashboard starts hiding similar articles once you've flagged at least ${data.minFlagged || 2} articles on the same theme.</div>`;
+    }
+  } catch { /* banner still explains the view */ }
+  banner.innerHTML = `
+    <div style="margin-bottom:6px"><strong>Hidden articles.</strong> Articles you flagged as irrelevant, plus similar ones hidden automatically.
+    Switch a toggle off to restore that article — an automatically hidden article you restore stays in your feed for good.
+    To stop a pattern altogether, switch off the articles you flagged that taught it.</div>
+    ${learned}`;
+  return banner;
+}
+
+const hiddenToggle = document.getElementById('hidden-toggle');
+hiddenToggle.addEventListener('click', () => {
+  state.showHidden = !state.showHidden;
+  hiddenToggle.classList.toggle('active', state.showHidden);
+  hiddenToggle.setAttribute('aria-pressed', String(state.showHidden));
+  loadFeed();
+});
+
+/* ── Toast ──────────────────────────────────────────────────────── */
+const toastEl     = document.getElementById('toast');
+const toastText   = document.getElementById('toast-text');
+const toastAction = document.getElementById('toast-action');
+let toastTimer;
+
+function showToast(message, actionLabel, onAction) {
+  toastText.textContent = message;
+  if (actionLabel) {
+    toastAction.textContent = actionLabel;
+    toastAction.classList.remove('hidden');
+    toastAction.onclick = () => { hideToast(); onAction(); };
+  } else {
+    toastAction.classList.add('hidden');
+    toastAction.onclick = null;
+  }
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, 7000);
+}
+function hideToast() { toastEl.classList.remove('show'); }
+
+/* ── Flag as irrelevant ─────────────────────────────────────────── */
+async function setIrrelevant(id, irrelevant) {
+  const res = await fetch(`/api/articles/${id}/flag`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ irrelevant }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// Removes cards from the current view and keeps the visible counts in step
+function removeCards(ids) {
+  let removedFromSections = 0;
+  for (const id of new Set(ids)) {
+    const cards = feedContent.querySelectorAll(`[data-id="${id}"]:not(.flag-toggle)`);
+    let countedThisId = false;
+    cards.forEach(card => {
+      const section = card.closest('.industry-section');
+      if (section && !countedThisId) {
+        countedThisId = true;
+        removedFromSections++;
+        const cnt = section.querySelector('.industry-count');
+        const n = parseInt((cnt.textContent || '0').replace(/,/g, '')) - 1;
+        cnt.textContent = Math.max(0, n).toLocaleString();
+      }
+      card.classList.add('removing');
+      setTimeout(() => {
+        const list  = card.parentElement;
+        const group = card.closest('.event-group');
+        const breakingGroup = card.closest('.breaking-industry-group');
+        card.remove();
+        if (group) {
+          const label = group.querySelector('.event-group-label');
+          const left  = group.querySelectorAll('.article-card').length;
+          if (label?.dataset.label) label.textContent = `${label.dataset.label} (${left})`;
+          if (!left && !group.querySelector('.load-section-btn')) group.remove();
+        }
+        if (section && !section.querySelector('.article-card') && !section.querySelector('.load-section-btn')) section.remove();
+        if (breakingGroup && !breakingGroup.querySelector('.breaking-card')) {
+          const bs = breakingGroup.closest('.breaking-section');
+          breakingGroup.remove();
+          if (bs && !bs.querySelector('.breaking-card')) bs.remove();
+        }
+        if (list && !feedContent.querySelector('.article-card, .breaking-card') && !feedContent.querySelector('.load-section-btn')) {
+          emptyState.classList.remove('hidden');
+          emptyMsg.textContent = state.showHidden ? 'Nothing is hidden for these filters.' : 'No articles match your current filters.';
+        }
+      }, 200);
+    });
+  }
+  const total = parseInt((resultCount.textContent || '0').replace(/,/g, '')) - removedFromSections;
+  resultCount.textContent = Math.max(0, total).toLocaleString();
+}
+
+feedContent.addEventListener('click', async e => {
+  const btn = e.target.closest('.flag-toggle');
+  if (!btn) return;
+  // The toggle sits inside the card's link — don't open the article
+  e.preventDefault();
+  e.stopPropagation();
+  if (btn.disabled) return;
+
+  const id      = parseInt(btn.dataset.id);
+  const wasOn   = btn.getAttribute('aria-pressed') === 'true';
+  const turnOn  = !wasOn;
+  btn.disabled = true;
+
+  try {
+    const result = await setIrrelevant(id, turnOn);
+    if (turnOn) {
+      removeCards([id, ...result.autoHidden]);
+      const extra = result.autoHidden.length;
+      const msg = extra
+        ? `Flagged as irrelevant. Also hid ${extra} similar article${extra === 1 ? '' : 's'}.`
+        : 'Flagged as irrelevant.';
+      showToast(msg, 'Undo', async () => {
+        try { await setIrrelevant(id, false); } catch { /* reload shows true state */ }
+        loadFeed(); refreshStatus();
+      });
+    } else {
+      // Restoring from the Hidden view
+      removeCards([id, ...result.autoRestored]);
+      const extra = result.autoRestored.length;
+      showToast(extra
+        ? `Restored to your feed, along with ${extra} similar article${extra === 1 ? '' : 's'}.`
+        : 'Restored to your feed.');
+    }
+    refreshStatus();
+  } catch (err) {
+    console.error('Flag error:', err);
+    btn.disabled = false;
+    showToast('Could not save that change — please try again.');
+  }
+});
 
 /* ── Init ───────────────────────────────────────────────────────── */
 buildCompanyPicker();

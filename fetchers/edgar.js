@@ -23,6 +23,12 @@ const TRACKED = [
   { name: 'Block',           cik: '1512673', industry: 'payments'         },
   { name: 'Affirm',          cik: '1820302', industry: 'bnpl'             },
   { name: 'American Express',cik: '4962',    industry: 'card_networks'    },
+  { name: 'Citi',            cik: '831001',  industry: 'big_banks'        },
+  { name: 'Wells Fargo',     cik: '72971',   industry: 'big_banks'        },
+  { name: 'Bank of America', cik: '70858',   industry: 'big_banks'        },
+  { name: 'PNC',             cik: '713676',  industry: 'big_banks'        },
+  { name: 'Truist',          cik: '92230',   industry: 'big_banks'        },
+  { name: 'U.S. Bank',       cik: '36104',   industry: 'big_banks'        },
 ];
 
 // Map 8-K item numbers to event types
