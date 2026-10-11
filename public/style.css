@@ -26,6 +26,7 @@
   --radius: 4px;
 
   /* Industry accent colors */
+  --c-big_banks:        #a04a00;
   --c-big_tech_fintech: #003087;
   --c-card_networks:    #4a0080;
   --c-payments:         #005a00;
@@ -140,6 +141,7 @@ body {
 .filter-btn.active { color: var(--text-sidebar-active); background: rgba(0,0,0,0.04); border-left-color: #c8ccd4; }
 
 /* Per-industry active border colors */
+.filter-btn[data-value="big_banks"].active        { border-left-color: var(--c-big_banks); }
 .filter-btn[data-value="big_tech_fintech"].active { border-left-color: var(--c-big_tech_fintech); }
 .filter-btn[data-value="card_networks"].active    { border-left-color: var(--c-card_networks); }
 .filter-btn[data-value="payments"].active         { border-left-color: var(--c-payments); }
@@ -162,6 +164,7 @@ body {
 }
 .filter-btn.active .dot { opacity: 1; }
 
+.dot-big_banks        { background: var(--c-big_banks); }
 .dot-big_tech_fintech { background: var(--c-big_tech_fintech); }
 .dot-card_networks    { background: var(--c-card_networks); }
 .dot-payments         { background: var(--c-payments); }
@@ -402,6 +405,7 @@ body {
 }
 
 /* Per-industry full background bars */
+.industry-section[data-industry="big_banks"]        .industry-header { background: #a04a00; }
 .industry-section[data-industry="big_tech_fintech"] .industry-header { background: #003087; }
 .industry-section[data-industry="card_networks"]    .industry-header { background: #4a0080; }
 .industry-section[data-industry="payments"]         .industry-header { background: #005a00; }
@@ -457,6 +461,7 @@ body {
 }
 
 /* Per-industry event label color */
+.industry-section[data-industry="big_banks"]        .event-group-label { color: #a04a00; }
 .industry-section[data-industry="big_tech_fintech"] .event-group-label { color: #003087; }
 .industry-section[data-industry="card_networks"]    .event-group-label { color: #4a0080; }
 .industry-section[data-industry="payments"]         .event-group-label { color: #005a00; }
@@ -516,6 +521,7 @@ body {
 }
 
 /* Industry badges (used in breaking section) */
+.badge-big_banks        { background: rgba(160,74,0,0.08); color: #a04a00; }
 .badge-big_tech_fintech { background: rgba(0,48,135,0.08); color: #003087; }
 .badge-card_networks    { background: rgba(74,0,128,0.08); color: #4a0080; }
 .badge-payments         { background: rgba(0,90,0,0.08); color: #005a00; }
@@ -567,6 +573,72 @@ body {
 }
 
 .card-footer { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+
+/* ── Flag as irrelevant toggle ────────────────────────────────── */
+.flag-toggle {
+  margin-left: auto; flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 6px; border: none; border-radius: 3px; background: none;
+  font-family: inherit; font-size: 10.5px; font-weight: 500; color: var(--text-muted);
+  cursor: pointer; transition: color 0.12s, background 0.12s;
+}
+.flag-toggle:hover { color: #b0003a; background: rgba(176,0,58,0.06); }
+.flag-toggle:focus-visible { outline: 2px solid #b0003a; outline-offset: 1px; }
+.flag-switch {
+  position: relative; width: 22px; height: 12px; flex-shrink: 0;
+  border-radius: 6px; background: #c8ccd4; transition: background 0.15s;
+}
+.flag-switch::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 8px; height: 8px; border-radius: 50%; background: #ffffff;
+  transition: transform 0.15s;
+}
+.flag-toggle[aria-pressed="true"] { color: #b0003a; }
+.flag-toggle[aria-pressed="true"] .flag-switch { background: #b0003a; }
+.flag-toggle[aria-pressed="true"] .flag-switch::after { transform: translateX(10px); }
+.flag-toggle:disabled { opacity: 0.5; cursor: wait; }
+
+.breaking-card-footer { display: flex; align-items: center; gap: 6px; }
+.breaking-card-footer .flag-toggle { font-size: 10px; }
+
+.article-card.removing, .breaking-card.removing {
+  opacity: 0; transform: translateX(8px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.card-hidden-reason {
+  font-size: 10.5px; color: #8a5a00; line-height: 1.4;
+  background: #fff8e6; border: 1px solid #f0dca8; border-radius: 3px;
+  padding: 3px 7px; margin-bottom: 4px;
+}
+
+/* Hidden review banner */
+.hidden-banner {
+  background: var(--card-bg); border: 1px solid var(--border); border-left: 3px solid #b0003a;
+  border-radius: var(--radius); padding: 12px 14px; margin-bottom: 18px;
+  font-size: 12px; color: var(--text-secondary); line-height: 1.5;
+}
+.hidden-banner strong { color: var(--text-primary); }
+.hidden-banner .learned-terms { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+
+/* Sidebar hidden-view button */
+.filter-btn[data-value="hidden"].active { border-left-color: #b0003a; }
+
+/* Toast */
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 12px);
+  display: flex; align-items: center; gap: 14px;
+  background: #1a1a2e; color: #ffffff; border-radius: 6px;
+  padding: 10px 14px; font-size: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  opacity: 0; pointer-events: none; transition: opacity 0.18s, transform 0.18s;
+  z-index: 50; max-width: calc(100vw - 32px);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.toast button {
+  background: none; border: none; color: #8fb4ff; font: inherit; font-weight: 700;
+  cursor: pointer; padding: 0; white-space: nowrap;
+}
+.toast button:hover { text-decoration: underline; }
 .card-source { font-weight: 600; color: var(--text-dim); }
 
 .card-image {

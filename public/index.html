@@ -42,6 +42,11 @@
             Industry
             <button class="select-all-btn" id="industry-select-all" data-section="industry">Deselect All</button>
           </div>
+          <button class="filter-btn active" data-group="industry" data-value="big_banks">
+            <span class="dot dot-big_banks"></span>
+            <span class="filter-label">Big Banks</span>
+            <span class="filter-count" id="cnt-big_banks">—</span>
+          </button>
           <button class="filter-btn active" data-group="industry" data-value="big_tech_fintech">
             <span class="dot dot-big_tech_fintech"></span>
             <span class="filter-label">Big Tech</span>
@@ -189,6 +194,16 @@
           </div>
         </div>
 
+        <!-- ── Hidden articles (flagged + auto-hidden) ────────────── -->
+        <div class="nav-section">
+          <div class="nav-section-title">Review</div>
+          <button class="filter-btn" id="hidden-toggle" data-value="hidden" aria-pressed="false"
+                  title="Articles you flagged as irrelevant, plus similar ones hidden automatically">
+            <span class="filter-label">Hidden articles</span>
+            <span class="filter-count" id="cnt-hidden">—</span>
+          </button>
+        </div>
+
       </nav>
 
       <div class="sidebar-footer">
@@ -250,6 +265,11 @@
       </div>
 
     </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <span id="toast-text"></span>
+    <button type="button" id="toast-action" class="hidden"></button>
   </div>
 
   <script src="app.js"></script>

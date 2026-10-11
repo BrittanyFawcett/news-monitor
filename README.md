@@ -59,3 +59,12 @@ From your local machine, commit and push all changes in one command:
 | `GNEWS_API_KEY` | No | [gnews.io](https://gnews.io) key |
 | `USER_EMAIL` | Yes | Contact email for SEC EDGAR User-Agent header |
 | `PORT` | No | Server port (default: 3000) |
+
+## Flagging irrelevant articles
+
+Every article card has a **Flag as irrelevant** toggle. Flagged articles leave the feed, and the dashboard learns from them (`learn.js`):
+
+- A word or phrase becomes a *learned term* once it appears in at least 2 flagged articles and is at least 10× more common in flagged articles than in the ones you keep. Company names (Visa, Citi, Apple Pay…) are never learned on their own.
+- An article is hidden automatically only if it shares 2+ learned terms with one specific flagged article. The reason is shown on the card.
+- **Hidden articles** (sidebar → Review) lists everything flagged or auto-hidden, plus the learned terms. Switch a toggle off to restore an article; an auto-hidden article you restore is never hidden again. Un-flagging an article you flagged also un-hides whatever it caused.
+- The filter re-runs after every flag, after every fetch, and on startup.

@@ -11,12 +11,13 @@ const { fetchCurrentsAPI }  = require('./fetchers/currents');
 const { fetchGNews }        = require('./fetchers/gnews');
 const { isBreaking, isRelevant, detectCompanies, detectIndustry, detectEventType, isLeadershipEvent } = require('./fetchers/classify');
 const { decodeEntities }    = require('./fetchers/decode');
+const { applyLearnedFilter, learningSummary } = require('./learn');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
 const INDUSTRIES = [
-  'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
+  'big_banks', 'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
   'neobanks', 'brokerage', 'mortgage_lending', 'digital_assets', 'open_banking',
 ];
 
@@ -58,6 +59,9 @@ async function runAllFetchers() {
   // Press releases: BusinessWire, PR Newswire, GlobeNewswire
   await fetchPressReleases();
 
+  // Hide newly fetched articles that resemble ones you've flagged
+  try { applyLearnedFilter(); } catch (err) { console.error('[Learn]', err.message); }
+
   lastFetchTime = new Date().toISOString();
   isFetching = false;
   console.log('[Fetch] Complete\n');
@@ -66,7 +70,7 @@ async function runAllFetchers() {
 // ── Shared query builder ───────────────────────────────────────────────────
 function buildBaseConditions(req) {
   const { source_type, date_from, search, company } = req.query;
-  const conds  = [];
+  const conds  = [visibilityCondition(req)];
   const params = [];
 
   if (source_type) {
@@ -90,6 +94,12 @@ function buildBaseConditions(req) {
   }
 
   return { conds, params };
+}
+
+// Normal view shows visible articles only; ?hidden=1 shows what you flagged
+// plus what the learned filter hid, so you can review and restore them.
+function visibilityCondition(req) {
+  return req.query.hidden === '1' ? 'irrelevant IN (1, 2)' : 'COALESCE(irrelevant, 0) = 0';
 }
 
 function makeWhere(conds) {
@@ -121,7 +131,7 @@ app.get('/api/feed', (req, res) => {
   try {
     // ── Breaking news — uses is_breaking flag set at fetch time ────────────
     let breaking = [];
-    {
+    if (req.query.hidden !== '1') {
       const bConds  = [...base, 'is_breaking = 1',
         `event_type IN (${BREAKING_EVENT_TYPES.map(() => '?').join(',')})`];
       const bParams = [...baseParams, ...BREAKING_EVENT_TYPES];
@@ -188,7 +198,7 @@ app.get('/api/articles', (req, res) => {
   const { industry, source_type, event_type, date_from, date_to, search, company,
           limit = 20, offset = 0 } = req.query;
 
-  const conditions = [];
+  const conditions = [visibilityCondition(req)];
   const params = [];
 
   if (industry) {
@@ -247,6 +257,41 @@ app.post('/api/fetch', (req, res) => {
   runAllFetchers();
 });
 
+// ── POST /api/articles/:id/flag — flag as irrelevant, or restore ──────────
+// Body: { irrelevant: true | false }
+app.post('/api/articles/:id/flag', (req, res) => {
+  const id   = parseInt(req.params.id);
+  const flag = req.body?.irrelevant === true;
+  const row  = db.prepare('SELECT id, irrelevant FROM articles WHERE id = ?').get(id);
+  if (!row) return res.status(404).json({ error: 'Article not found' });
+
+  try {
+    if (flag) {
+      db.prepare(`UPDATE articles SET irrelevant = 1, user_kept = 0, hidden_reason = NULL,
+                  flagged_at = datetime('now') WHERE id = ?`).run(id);
+    } else {
+      // Restoring something the filter hid automatically is a signal that it got it
+      // wrong: keep this article visible for good and learn from it. Un-flagging your
+      // own flag is just an undo.
+      const keep = row.irrelevant === 2 ? 1 : 0;
+      db.prepare(`UPDATE articles SET irrelevant = 0, user_kept = ?, hidden_reason = NULL,
+                  flagged_at = NULL WHERE id = ?`).run(keep, id);
+    }
+    const { hidden, restored } = applyLearnedFilter();
+    res.json({ ok: true, id, irrelevant: flag,
+               autoHidden: hidden.filter(x => x !== id), autoRestored: restored });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── GET /api/learning — what the filter has learned from your flags ───────
+app.get('/api/learning', (_req, res) => {
+  try { res.json(learningSummary()); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ── GET /api/status ────────────────────────────────────────────────────────
 app.get('/api/status', (_req, res) => {
   const industryCols = INDUSTRIES.map(i =>
@@ -269,13 +314,21 @@ app.get('/api/status', (_req, res) => {
       ${industryCols},
       ${eventCols}
     FROM articles
+    WHERE COALESCE(irrelevant, 0) = 0
   `).get();
 
   const industry_news_count = db.prepare(
-    `SELECT COUNT(*) AS n FROM articles WHERE event_type IS NULL OR event_type = ''`
+    `SELECT COUNT(*) AS n FROM articles
+     WHERE (event_type IS NULL OR event_type = '') AND COALESCE(irrelevant, 0) = 0`
   ).get().n;
 
-  res.json({ ...stats, industry_news_count, isFetching, lastFetchTime });
+  const hidden = db.prepare(`
+    SELECT COUNT(CASE WHEN irrelevant = 1 THEN 1 END) AS flagged_count,
+           COUNT(CASE WHEN irrelevant = 2 THEN 1 END) AS auto_hidden_count
+    FROM articles
+  `).get();
+
+  res.json({ ...stats, ...hidden, industry_news_count, isFetching, lastFetchTime });
 });
 
 // ── Cron: every 2 hours ────────────────────────────────────────────────────
@@ -435,6 +488,7 @@ app.listen(PORT, () => {
   recomputeLeadershipTags();
   removeVisaFalsePositives();
   backfillBreaking();
+  try { applyLearnedFilter(); } catch (err) { console.error('[Learn]', err.message); }
   const count = db.prepare('SELECT COUNT(*) as n FROM articles').get().n;
   if (count === 0) {
     console.log('Empty database — running initial fetch...');

@@ -46,9 +46,39 @@ const ALL_COMPANIES = [
   { name: 'Better.com',       terms: ['better.com', 'better mortgage'] },
   // Commerce & Embedded Finance
   { name: 'Shopify',          terms: ['shopify'] },
+  // Big Banks — listed last so an article that also names a fintech company
+  // keeps that company's category. Bank names collide with stadiums, generic
+  // phrases ("U.S. bank regulators") and other businesses, so they match by
+  // case-sensitive whole-word patterns plus per-bank exclusions instead of
+  // plain substrings.
+  { name: 'Citi', terms: [],
+    patterns: [/\bCiti(?:group|bank|corp)?\b/, /\bCITIGROUP\b/],
+    excludes: ['citi field', 'citi bike', 'citi open', 'citi trends', 'citizens'] },
+  { name: 'Wells Fargo', terms: [],
+    patterns: [/\bWells Fargo\b/i],
+    excludes: ['wells fargo center', 'wells fargo arena', 'wells fargo championship'] },
+  { name: 'Bank of America', terms: [],
+    patterns: [/\bBank of America\b/i, /\bBofA\b/],
+    excludes: ['bank of america stadium', 'bank of america plaza', 'bank of america tower'] },
+  { name: 'PNC', terms: [],
+    patterns: [/\bPNC\b/],
+    excludes: ['pnc park', 'pnc arena', 'pnc music pavilion', 'pnc bank arts center'] },
+  { name: 'Truist', terms: [],
+    patterns: [/\bTruist\b/i],
+    excludes: ['truist park', 'truist field', 'truist championship', 'truist arena'] },
+  { name: 'U.S. Bank', terms: [],
+    // "U.S. Bank" is also a generic phrase ("U.S. bank stocks", "U.S. Bank
+    // Regulators"), so the bare name only counts when it isn't followed by a
+    // word that turns it into that generic phrase.
+    patterns: [
+      /\bU\.?S\.? Bancorp\b/i, /\bUSBank\b/i,
+      /\bU\.S\. Bank\b(?!s\b|['’]s\b| (?:regulators?|regulations?|rules?|stocks?|shares|earnings|failures?|crisis|deposits?|lending|loans?|capital|sector|industry|holding|executives?|lenders?|branches|charters?|accounts?|system|mergers?)\b)/i,
+    ],
+    excludes: ['u.s. bank stadium', 'us bank stadium', 'u.s. bank tower', 'u.s. bank arena'] },
 ];
 
 const COMPANY_GROUPS = {
+  big_banks:        { label: 'Big Banks',            companies: ['Citi', 'Wells Fargo', 'Bank of America', 'PNC', 'Truist', 'U.S. Bank'] },
   big_tech_fintech: { label: 'Big Tech',            companies: ['Apple', 'Amazon', 'Google', 'Microsoft', 'Meta'] },
   payments:         { label: 'Payments',             companies: ['PayPal', 'Stripe', 'Block', 'Bilt', 'Adyen'] },
   brokerage:        { label: 'Brokerage',            companies: ['Fidelity', 'Schwab', 'Vanguard', 'BlackRock', 'Robinhood'] },
@@ -268,7 +298,12 @@ function detectCompanies(title, description) {
   const lowerText = `${title || ''} ${description || ''}`.toLowerCase();
   const origText  = `${title || ''} ${description || ''}`;
   const found = new Set();
-  for (const { name, terms } of ALL_COMPANIES) {
+  for (const { name, terms, patterns, excludes } of ALL_COMPANIES) {
+    if (patterns) {
+      if (excludes && excludes.some(x => lowerText.includes(x))) continue;
+      if (patterns.some(re => re.test(origText))) found.add(name);
+      continue;
+    }
     if (terms.some(t => {
       const idx = lowerText.indexOf(t);
       if (idx === -1) return false;
@@ -362,6 +397,8 @@ const COMPANY_TO_INDUSTRY = {
   Klarna: 'bnpl', Affirm: 'bnpl', Afterpay: 'bnpl',
   'Rocket Mortgage': 'mortgage_lending', LoanDepot: 'mortgage_lending', 'Better.com': 'mortgage_lending',
   Shopify: 'commerce',
+  Citi: 'big_banks', 'Wells Fargo': 'big_banks', 'Bank of America': 'big_banks',
+  PNC: 'big_banks', Truist: 'big_banks', 'U.S. Bank': 'big_banks',
 };
 
 function detectIndustry(companies, title, description) {

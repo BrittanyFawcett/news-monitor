@@ -33,6 +33,15 @@ try { db.exec('ALTER TABLE articles ADD COLUMN companies   TEXT'); } catch {}
 try { db.exec('ALTER TABLE articles ADD COLUMN is_breaking INTEGER DEFAULT 0'); } catch {}
 try { db.exec('CREATE INDEX IF NOT EXISTS idx_event_type  ON articles(event_type)'); } catch {}
 try { db.exec('CREATE INDEX IF NOT EXISTS idx_is_breaking ON articles(is_breaking)'); } catch {}
+// Relevance feedback:
+//   irrelevant  0 = visible, 1 = flagged by you, 2 = hidden automatically by the learned filter
+//   user_kept   1 = you restored it from Hidden, so it is never auto-hidden again
+//   hidden_reason  why the learned filter hid it (matched terms + the flagged article it resembles)
+try { db.exec('ALTER TABLE articles ADD COLUMN irrelevant    INTEGER DEFAULT 0'); } catch {}
+try { db.exec('ALTER TABLE articles ADD COLUMN user_kept     INTEGER DEFAULT 0'); } catch {}
+try { db.exec('ALTER TABLE articles ADD COLUMN hidden_reason TEXT'); } catch {}
+try { db.exec('ALTER TABLE articles ADD COLUMN flagged_at    TEXT'); } catch {}
+try { db.exec('CREATE INDEX IF NOT EXISTS idx_irrelevant ON articles(irrelevant)'); } catch {}
 
 // Clear stale data if the DB still has old industry categories
 const OLD_INDUSTRIES = new Set(['tech', 'healthcare', 'finance', 'energy']);

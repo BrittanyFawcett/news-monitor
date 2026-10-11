@@ -4,6 +4,7 @@ const { detectCompanies, detectEventType, detectIndustry, isRelevant, isBreaking
 const { decodeEntities } = require('./decode');
 
 const QUERIES = {
+  big_banks:        'Citigroup OR Citibank OR "Wells Fargo" OR "Bank of America" OR "PNC Bank" OR Truist OR "U.S. Bancorp"',
   big_tech_fintech: '"Apple Pay" OR "Apple Card" OR "Amazon Pay" OR "Google Pay" OR "Google Wallet" OR "Meta Pay"',
   payments:         'PayPal OR Venmo OR Stripe OR "Cash App" OR Adyen OR Bilt',
   brokerage:        'Fidelity OR Schwab OR Vanguard OR BlackRock OR Robinhood',
