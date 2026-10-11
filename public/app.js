@@ -1,6 +1,6 @@
 /* ── Constants ──────────────────────────────────────────────────── */
 const ALL_INDUSTRIES = [
-  'big_banks', 'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
+  'big_banks', 'travel', 'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
   'neobanks', 'brokerage', 'mortgage_lending', 'digital_assets', 'open_banking',
 ];
 const ALL_EVENT_TYPES = ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory', 'industry_news'];
@@ -9,6 +9,7 @@ const LIMIT           = 15;
 
 const INDUSTRY_LABELS = {
   big_banks:        'Big Banks',
+  travel:           'Travel',
   big_tech_fintech: 'Big Tech',
   payments:         'Payments',
   brokerage:        'Brokerage & Asset Management',
@@ -40,6 +41,7 @@ const SOURCE_LABELS = {
 
 const COMPANY_GROUPS = {
   big_banks:        { label: 'Big Banks',             companies: ['Citi', 'Wells Fargo', 'Bank of America', 'PNC', 'Truist', 'U.S. Bank'] },
+  travel:           { label: 'Travel',                companies: ['American Airlines', 'Delta', 'United Airlines', 'Southwest', 'Alaska Airlines', 'JetBlue', 'Hawaiian Airlines', 'Spirit Airlines', 'Frontier Airlines', 'Allegiant', 'Sun Country', 'Uber', 'Lyft', 'Marriott', 'Hilton', 'Hyatt', 'IHG', 'Choice Hotels'] },
   big_tech_fintech: { label: 'Big Tech',             companies: ['Apple', 'Amazon', 'Google', 'Microsoft', 'Meta'] },
   card_networks:    { label: 'Card Networks',         companies: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
   payments:         { label: 'Payments',              companies: ['PayPal', 'Stripe', 'Block', 'Bilt', 'Adyen'] },
@@ -193,9 +195,27 @@ function flagToggleHtml(a) {
               : 'Flag as irrelevant';
   const title = on ? 'Switch off to restore this article to your feed'
                    : 'Hide this article and teach the dashboard to hide similar ones';
-  return `<button type="button" class="flag-toggle" data-id="${a.id}" aria-pressed="${on}" title="${title}">
+  return `<button type="button" class="flag-toggle irrelevant-toggle" data-id="${a.id}" aria-pressed="${on}" title="${title}">
       <span class="flag-switch" aria-hidden="true"></span><span class="flag-label">${label}</span>
     </button>`;
+}
+
+// The "Flag as breaking" switch. On when the article is currently in Breaking
+// News — whether by the keyword rules, your flag, or the learner.
+function breakingToggleHtml(a) {
+  const on    = a.in_breaking === 1;
+  const label = on ? 'Breaking' : 'Flag as breaking';
+  const title = on ? 'Switch off to take this out of Breaking News (the dashboard learns from this too)'
+                   : 'Add to Breaking News and teach the dashboard to flag similar articles';
+  return `<button type="button" class="flag-toggle breaking-toggle" data-id="${a.id}" aria-pressed="${on}" title="${title}">
+      <span class="flag-switch" aria-hidden="true"></span><span class="flag-label">${label}</span>
+    </button>`;
+}
+
+function cardActionsHtml(a) {
+  // In the Hidden view only the restore switch makes sense
+  if (state.showHidden) return `<span class="card-actions">${flagToggleHtml(a)}</span>`;
+  return `<span class="card-actions">${breakingToggleHtml(a)}${flagToggleHtml(a)}</span>`;
 }
 
 function sectionCardHtml(a) {
@@ -222,7 +242,7 @@ function sectionCardHtml(a) {
         ${companyTagsHtml(a.companies)}
         <div class="card-footer">
           <span class="card-source">${escapeHtml(a.source_name || '')}</span>
-          ${flagToggleHtml(a)}
+          ${cardActionsHtml(a)}
         </div>
       </div>
       ${img}
@@ -237,7 +257,13 @@ function breakingCardHtml(a) {
     ? `${industryLabel}: ${companies[0].toUpperCase()}`
     : industryLabel;
   const evtLabel = (a.event_type && EVENT_TYPE_LABELS[a.event_type]) || (a.event_type ? a.event_type : 'Industry News');
-  const evtHtml = `<div class="breaking-evt-row"><span class="breaking-evt-tag">${evtLabel}</span></div>`;
+  // Shows why it's here when it wasn't the keyword rules: your flag, or the learner
+  const whyTag = a.breaking_user === 1
+    ? `<span class="breaking-evt-tag breaking-why" title="You flagged this as breaking">Your flag</span>`
+    : (a.breaking_auto === 1
+        ? `<span class="breaking-evt-tag breaking-why" title="${escapeHtml(a.breaking_reason || '')}">Learned</span>`
+        : '');
+  const evtHtml = `<div class="breaking-evt-row"><span class="breaking-evt-tag">${evtLabel}</span>${whyTag}</div>`;
   const timeStr = a.published_at ? ` · ${timeAgo(a.published_at)}` : '';
   return `
     <a class="breaking-card" data-id="${a.id}" href="${escapeHtml(a.url)}" target="_blank" rel="noopener noreferrer">
@@ -246,7 +272,8 @@ function breakingCardHtml(a) {
         ${evtHtml}
         <div class="breaking-card-divider"></div>
         <div class="breaking-card-title">${escapeHtml(a.title)}</div>
-        <div class="breaking-card-footer"><span>${escapeHtml(a.source_name || '')}${timeStr}</span>${flagToggleHtml(a)}</div>
+        <div class="breaking-card-footer"><span>${escapeHtml(a.source_name || '')}${timeStr}</span></div>
+        <div class="breaking-card-actions">${cardActionsHtml(a)}</div>
       </div>
     </a>`;
 }
@@ -762,9 +789,72 @@ function removeCards(ids) {
   resultCount.textContent = Math.max(0, total).toLocaleString();
 }
 
+/* ── Flag as breaking ────────────────────────────────────────────── */
+async function setBreaking(id, breaking) {
+  const res = await fetch(`/api/articles/${id}/breaking`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ breaking }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// Re-fetches only the Breaking section and syncs every breaking switch on the
+// page, so the rest of the feed (scroll position, collapsed groups) stays put.
+async function refreshBreakingSection() {
+  const res  = await fetch(`/api/feed?${buildFilterParams()}`);
+  const data = await res.json();
+  const ids  = new Set(data.breaking.map(a => a.id));
+
+  const old = feedContent.querySelector('.breaking-section');
+  if (data.breaking.length) {
+    const fresh = renderBreakingSection(data.breaking);
+    if (old) old.replaceWith(fresh);
+    else feedContent.prepend(fresh);
+  } else if (old) {
+    old.remove();
+  }
+
+  feedContent.querySelectorAll('.article-card .breaking-toggle').forEach(t => {
+    const on = ids.has(parseInt(t.dataset.id));
+    t.setAttribute('aria-pressed', String(on));
+    t.querySelector('.flag-label').textContent = on ? 'Breaking' : 'Flag as breaking';
+  });
+}
+
+async function onBreakingToggle(btn) {
+  const id     = parseInt(btn.dataset.id);
+  const turnOn = btn.getAttribute('aria-pressed') !== 'true';
+  btn.disabled = true;
+  try {
+    const result = await setBreaking(id, turnOn);
+    await refreshBreakingSection();
+    const n = turnOn ? result.autoPromoted.length : result.autoDemoted.length;
+    const similar = n ? ` ${turnOn ? 'Also flagged' : 'Also removed'} ${n} similar article${n === 1 ? '' : 's'}.` : '';
+    showToast(turnOn ? `Added to Breaking News.${similar}` : `Removed from Breaking News.${similar}`, 'Undo', async () => {
+      try { await setBreaking(id, !turnOn); } catch { /* refresh shows true state */ }
+      refreshBreakingSection();
+    });
+  } catch (err) {
+    console.error('Breaking flag error:', err);
+    showToast('Could not save that change — please try again.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 feedContent.addEventListener('click', async e => {
-  const btn = e.target.closest('.flag-toggle');
-  if (!btn) return;
+  const anyToggle = e.target.closest('.flag-toggle');
+  if (!anyToggle) return;
+  if (anyToggle.classList.contains('breaking-toggle')) {
+    // The toggle sits inside the card's link — don't open the article
+    e.preventDefault();
+    e.stopPropagation();
+    if (!anyToggle.disabled) onBreakingToggle(anyToggle);
+    return;
+  }
+  const btn = anyToggle;
   // The toggle sits inside the card's link — don't open the article
   e.preventDefault();
   e.stopPropagation();

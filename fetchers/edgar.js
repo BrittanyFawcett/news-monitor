@@ -29,6 +29,15 @@ const TRACKED = [
   { name: 'PNC',             cik: '713676',  industry: 'big_banks'        },
   { name: 'Truist',          cik: '92230',   industry: 'big_banks'        },
   { name: 'U.S. Bank',       cik: '36104',   industry: 'big_banks'        },
+  // Travel — CIKs verified against SEC company_tickers.json (Oct 2026)
+  { name: 'American Airlines', cik: '6201',  industry: 'travel'           },
+  { name: 'Delta',           cik: '27904',   industry: 'travel'           },
+  { name: 'United Airlines', cik: '100517',  industry: 'travel'           },
+  { name: 'Southwest',       cik: '92380',   industry: 'travel'           },
+  { name: 'Uber',            cik: '1543151', industry: 'travel'           },
+  { name: 'Marriott',        cik: '1048286', industry: 'travel'           },
+  { name: 'Hilton',          cik: '1585689', industry: 'travel'           },
+  { name: 'Hyatt',           cik: '1468174', industry: 'travel'           },
 ];
 
 // Map 8-K item numbers to event types

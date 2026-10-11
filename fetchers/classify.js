@@ -76,10 +76,99 @@ const ALL_COMPANIES = [
       /\bU\.S\. Bank\b(?!s\b|['’]s\b| (?:regulators?|regulations?|rules?|stocks?|shares|earnings|failures?|crisis|deposits?|lending|loans?|capital|sector|industry|holding|executives?|lenders?|branches|charters?|accounts?|system|mergers?)\b)/i,
     ],
     excludes: ['u.s. bank stadium', 'us bank stadium', 'u.s. bank tower', 'u.s. bank arena'] },
+
+  // Travel — airlines, ride share, and the hotel chains Chase and Amex partner
+  // with (Chase: Hyatt, IHG, Marriott; Amex: Hilton, Marriott, Choice).
+  // Listed last so a story that also names a card issuer or fintech keeps that
+  // category. Several names are ordinary words ("Delta", "United", "Spirit",
+  // "Frontier", "Southwest"), so a bare name only counts with airline context
+  // nearby (contextPatterns).
+  { name: 'American Airlines', terms: [],
+    patterns: [/\bAmerican Airlines\b/i, /\bAAdvantage\b/i] },
+  { name: 'Delta', terms: [],
+    patterns: [/\bDelta Air ?Lines\b/i, /\bSkyMiles\b/i, /\bDelta Sky Club\b/i],
+    contextPatterns: [/\bDelta\b/] },
+  { name: 'United Airlines', terms: [],
+    patterns: [/\bUnited Airlines\b/i, /\bMileagePlus\b/i],
+    contextPatterns: [/\bUnited\b(?! (?:States|Kingdom|Nations|Arab|Auto|Way|Health|Parcel|Rentals|Natural|Steelworkers|Therapeutics|Fire|Rail))/],
+    excludes: ['manchester united', 'newcastle united', 'leeds united', 'west ham united', 'atlanta united', 'd.c. united', 'sheffield united'] },
+  { name: 'Southwest', terms: [],
+    patterns: [/\bSouthwest Airlines\b/i, /\bRapid Rewards\b/i],
+    contextPatterns: [/\bSouthwest\b/] },
+  { name: 'Alaska Airlines', terms: [],
+    patterns: [/\bAlaska Airlines\b/i, /\bAlaska Air Group\b/i, /\bAtmos Rewards\b/i] },
+  { name: 'JetBlue', terms: [],
+    patterns: [/\bJetBlue\b/i] },
+  { name: 'Hawaiian Airlines', terms: [],
+    patterns: [/\bHawaiian Airlines\b/i],
+    contextPatterns: [/\bHawaiian\b/] },
+  { name: 'Spirit Airlines', terms: [],
+    patterns: [/\bSpirit Airlines\b/i],
+    contextPatterns: [/\bSpirit\b/] },
+  { name: 'Frontier Airlines', terms: [],
+    patterns: [/\bFrontier Airlines\b/i, /\bFrontier Group Holdings\b/i],
+    contextPatterns: [/\bFrontier\b/] },
+  { name: 'Allegiant', terms: [],
+    patterns: [/\bAllegiant\b/],
+    excludes: ['allegiant stadium'] },
+  { name: 'Sun Country', terms: [],
+    patterns: [/\bSun Country Airlines\b/i],
+    contextPatterns: [/\bSun Country\b/] },
+  { name: 'Uber', terms: [],
+    patterns: [/\bUber\b(?!-)/] },
+  { name: 'Lyft', terms: [],
+    patterns: [/\bLyft\b/] },
+  { name: 'Marriott', terms: [],
+    patterns: [/\bMarriott\b/, /\bBonvoy\b/i] },
+  { name: 'Hilton', terms: [],
+    patterns: [/\bHilton\b/],
+    excludes: ['paris hilton', 'perez hilton', 'hilton head', 'hilton als'] },
+  { name: 'Hyatt', terms: [],
+    patterns: [/\bHyatt\b/] },
+  { name: 'IHG', terms: [],
+    patterns: [/\bIHG\b/, /\bInterContinental Hotels\b/i, /\bHoliday Inn\b/i] },
+  { name: 'Choice Hotels', terms: [],
+    patterns: [/\bChoice Hotels\b/i, /\bChoice Privileges\b/i] },
+];
+
+// Words that confirm an ambiguous airline name ("Delta", "United", "Spirit"…)
+// refers to the airline when they appear within AIRLINE_CONTEXT_WINDOW chars.
+const AIRLINE_CONTEXT_TERMS = [
+  'airline', 'airlines', 'air carrier', 'carrier', 'flight', 'flights', 'flyer', 'flyers',
+  'aviation', 'faa', 'airport', 'pilot', 'pilots', 'flight attendant', 'passenger',
+  'boeing', 'airbus', 'jet', 'jets', 'aircraft', 'fleet', 'route', 'routes', 'nonstop',
+  'loyalty', 'miles', 'frequent', 'baggage', 'fares', 'ticket', 'tsa', 'cabin',
+  'american express', 'amex', 'co-brand', 'cobrand',
+  // Unambiguous airline names also confirm ("JetBlue and United…"). Ambiguous
+  // ones (delta, united, southwest) are left out so they can't confirm each
+  // other in non-airline text ("drought in the Southwest United States").
+  'jetblue', 'american airlines', 'delta air lines', 'united airlines', 'southwest airlines',
+  'alaska airlines', 'allegiant', 'hawaiian airlines', 'spirit airlines', 'frontier airlines',
+  'skymiles', 'mileageplus', 'aadvantage',
+];
+const AIRLINE_CONTEXT_WINDOW = 120;
+
+function matchesWithContext(origText, re) {
+  const g = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
+  let m;
+  while ((m = g.exec(origText)) !== null) {
+    const start = Math.max(0, m.index - AIRLINE_CONTEXT_WINDOW);
+    const end   = Math.min(origText.length, m.index + m[0].length + AIRLINE_CONTEXT_WINDOW);
+    const ctx   = origText.slice(start, end).toLowerCase();
+    if (AIRLINE_CONTEXT_TERMS.some(t => new RegExp(`\\b${t}\\b`).test(ctx))) return true;
+  }
+  return false;
+}
+
+const TRAVEL_COMPANIES = [
+  'American Airlines', 'Delta', 'United Airlines', 'Southwest', 'Alaska Airlines', 'JetBlue',
+  'Hawaiian Airlines', 'Spirit Airlines', 'Frontier Airlines', 'Allegiant', 'Sun Country',
+  'Uber', 'Lyft', 'Marriott', 'Hilton', 'Hyatt', 'IHG', 'Choice Hotels',
 ];
 
 const COMPANY_GROUPS = {
   big_banks:        { label: 'Big Banks',            companies: ['Citi', 'Wells Fargo', 'Bank of America', 'PNC', 'Truist', 'U.S. Bank'] },
+  travel:           { label: 'Travel',               companies: TRAVEL_COMPANIES },
   big_tech_fintech: { label: 'Big Tech',            companies: ['Apple', 'Amazon', 'Google', 'Microsoft', 'Meta'] },
   payments:         { label: 'Payments',             companies: ['PayPal', 'Stripe', 'Block', 'Bilt', 'Adyen'] },
   brokerage:        { label: 'Brokerage',            companies: ['Fidelity', 'Schwab', 'Vanguard', 'BlackRock', 'Robinhood'] },
@@ -338,10 +427,11 @@ function detectCompanies(title, description) {
   const lowerText = `${title || ''} ${description || ''}`.toLowerCase();
   const origText  = `${title || ''} ${description || ''}`;
   const found = new Set();
-  for (const { name, terms, patterns, excludes } of ALL_COMPANIES) {
+  for (const { name, terms, patterns, contextPatterns, excludes } of ALL_COMPANIES) {
     if (patterns) {
       if (excludes && excludes.some(x => lowerText.includes(x))) continue;
       if (patterns.some(re => re.test(origText))) found.add(name);
+      else if (contextPatterns && contextPatterns.some(re => matchesWithContext(origText, re))) found.add(name);
       continue;
     }
     if (terms.some(t => {
@@ -440,6 +530,7 @@ const COMPANY_TO_INDUSTRY = {
   Shopify: 'commerce',
   Citi: 'big_banks', 'Wells Fargo': 'big_banks', 'Bank of America': 'big_banks',
   PNC: 'big_banks', Truist: 'big_banks', 'U.S. Bank': 'big_banks',
+  ...Object.fromEntries(TRAVEL_COMPANIES.map(c => [c, 'travel'])),
 };
 
 function detectIndustry(companies, title, description) {

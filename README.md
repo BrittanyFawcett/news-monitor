@@ -68,3 +68,11 @@ Every article card has a **Flag as irrelevant** toggle. Flagged articles leave t
 - An article is hidden automatically only if it shares 2+ learned terms with one specific flagged article. The reason is shown on the card.
 - **Hidden articles** (sidebar → Review) lists everything flagged or auto-hidden, plus the learned terms. Switch a toggle off to restore an article; an auto-hidden article you restore is never hidden again. Un-flagging an article you flagged also un-hides whatever it caused.
 - The filter re-runs after every flag, after every fetch, and on startup.
+
+## Flagging breaking news
+
+Every card also has a **Flag as breaking** toggle. It's on whenever the article is in Breaking News, whether the keyword rules, you, or the learner put it there.
+
+- **On** adds the article to Breaking News (tagged *Your flag*) and teaches the dashboard. Once two or more articles you flagged share distinctive terms, similar articles are promoted automatically (tagged *Learned*; hover for the matched terms). Same rules as the irrelevant filter in `learn.js`.
+- **Off** takes it out of Breaking News and stays off, even for articles the keyword rules flagged. Switched-off articles also count as evidence against those terms.
+- Both learners re-run after every toggle, after every fetch, and on startup. Hidden articles are never promoted.

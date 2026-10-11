@@ -42,6 +42,13 @@ try { db.exec('ALTER TABLE articles ADD COLUMN user_kept     INTEGER DEFAULT 0')
 try { db.exec('ALTER TABLE articles ADD COLUMN hidden_reason TEXT'); } catch {}
 try { db.exec('ALTER TABLE articles ADD COLUMN flagged_at    TEXT'); } catch {}
 try { db.exec('CREATE INDEX IF NOT EXISTS idx_irrelevant ON articles(irrelevant)'); } catch {}
+// Breaking-news feedback:
+//   breaking_user    1 = you flagged it as breaking, -1 = you switched it off (not breaking), 0 = no decision
+//   breaking_auto    1 = promoted by the learner because it resembles articles you flagged as breaking
+//   breaking_reason  why the learner promoted it
+try { db.exec('ALTER TABLE articles ADD COLUMN breaking_user   INTEGER DEFAULT 0'); } catch {}
+try { db.exec('ALTER TABLE articles ADD COLUMN breaking_auto   INTEGER DEFAULT 0'); } catch {}
+try { db.exec('ALTER TABLE articles ADD COLUMN breaking_reason TEXT'); } catch {}
 
 // Clear stale data if the DB still has old industry categories
 const OLD_INDUSTRIES = new Set(['tech', 'healthcare', 'finance', 'energy']);

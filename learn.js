@@ -82,12 +82,10 @@ function tokenize(title, description) {
   return terms;
 }
 
-// Builds the model from current flags. Cheap enough to rebuild on every flag.
-function train() {
-  const rows = db.prepare(
-    `SELECT id, title, description, irrelevant, user_kept FROM articles WHERE irrelevant IN (0, 1)`
-  ).all();
-
+// Builds a model from labelled rows. `isFlagged(r)` marks the articles you
+// flagged; every other row is the contrast set, weighted by `weightOf(r)`.
+// Cheap enough to rebuild on every click.
+function buildModel(rows, isFlagged, weightOf) {
   const dfFlagged = new Map();
   const dfKept    = new Map();
   const flaggedDocs = [];
@@ -95,12 +93,12 @@ function train() {
 
   for (const r of rows) {
     const terms = tokenize(r.title, r.description);
-    if (r.irrelevant === 1) {
+    if (isFlagged(r)) {
       nFlagged++;
       flaggedDocs.push({ id: r.id, title: r.title, terms });
       for (const t of terms) dfFlagged.set(t, (dfFlagged.get(t) || 0) + 1);
     } else {
-      const w = r.user_kept ? KEPT_WEIGHT : 1;
+      const w = weightOf(r);
       nKept += w;
       for (const t of terms) dfKept.set(t, (dfKept.get(t) || 0) + w);
     }
@@ -123,6 +121,27 @@ function train() {
   return { signals, flaggedDocs: flaggedDocs.filter(f => f.terms.size), nFlagged };
 }
 
+// Irrelevant model: your irrelevant flags vs. the visible articles you keep.
+// Auto-hidden articles are excluded so the filter never trains on its own output.
+function train() {
+  const rows = db.prepare(
+    `SELECT id, title, description, irrelevant, user_kept FROM articles WHERE irrelevant IN (0, 1)`
+  ).all();
+  return buildModel(rows, r => r.irrelevant === 1, r => (r.user_kept ? KEPT_WEIGHT : 1));
+}
+
+// Breaking model: articles you flagged as breaking vs. other visible articles.
+// Articles promoted by the learner are excluded (no self-reinforcement); ones
+// you switched off as "not breaking" count KEPT_WEIGHT times as contrast.
+function trainBreaking() {
+  const rows = db.prepare(
+    `SELECT id, title, description, breaking_user FROM articles
+     WHERE COALESCE(irrelevant, 0) = 0
+       AND (COALESCE(breaking_user, 0) != 0 OR COALESCE(breaking_auto, 0) = 0)`
+  ).all();
+  return buildModel(rows, r => r.breaking_user === 1, r => (r.breaking_user === -1 ? KEPT_WEIGHT : 1));
+}
+
 // Counts shared terms, not double-counting a word already covered by a shared phrase
 function distinctShared(shared) {
   const bigramWords = new Set();
@@ -143,9 +162,9 @@ function match(model, title, description) {
   return best;
 }
 
-function reasonText(m) {
+function reasonText(m, what = 'an article you flagged') {
   const terms = m.terms.slice(0, 5).map(t => `"${t}"`).join(', ');
-  return `Matched ${terms} — similar to an article you flagged: ${m.example}`;
+  return `Matched ${terms} — similar to ${what}: ${m.example}`;
 }
 
 // Re-trains and re-evaluates every article that isn't a direct decision of yours.
@@ -177,6 +196,47 @@ function applyLearnedFilter() {
   return { hidden, restored, signalCount: model.signals.size };
 }
 
+// Re-trains the breaking model and promotes visible articles that resemble the
+// ones you flagged as breaking. Articles you decided on yourself (flagged as
+// breaking, or switched off as not breaking) are left alone.
+function applyBreakingLearner() {
+  const model = trainBreaking();
+  const rows = db.prepare(
+    `SELECT id, title, description, breaking_auto FROM articles
+     WHERE COALESCE(irrelevant, 0) = 0 AND COALESCE(breaking_user, 0) = 0`
+  ).all();
+
+  const promote = db.prepare(`UPDATE articles SET breaking_auto = 1, breaking_reason = ? WHERE id = ?`);
+  const reason  = db.prepare(`UPDATE articles SET breaking_reason = ? WHERE id = ?`);
+  const demote  = db.prepare(`UPDATE articles SET breaking_auto = 0, breaking_reason = NULL WHERE id = ?`);
+  const promoted = [], demoted = [];
+
+  db.transaction(() => {
+    for (const r of rows) {
+      const m = match(model, r.title, r.description);
+      const text = m && reasonText(m, 'an article you flagged as breaking');
+      if (m && !r.breaking_auto)      { promote.run(text, r.id); promoted.push(r.id); }
+      else if (m && r.breaking_auto)  { reason.run(text, r.id); }
+      else if (!m && r.breaking_auto) { demote.run(r.id); demoted.push(r.id); }
+    }
+    // Articles that left the candidate pool (hidden, or decided by you) drop the learned flag
+    db.prepare(`UPDATE articles SET breaking_auto = 0, breaking_reason = NULL
+                WHERE breaking_auto = 1 AND (COALESCE(irrelevant, 0) != 0 OR COALESCE(breaking_user, 0) != 0)`).run();
+  })();
+
+  if (promoted.length || demoted.length) {
+    console.log(`[Learn] ${model.signals.size} breaking terms — promoted ${promoted.length}, demoted ${demoted.length}`);
+  }
+  return { promoted, demoted, signalCount: model.signals.size };
+}
+
+// Runs both learners. Hiding runs first so hidden articles aren't promoted.
+function applyAllLearners() {
+  const irrelevant = applyLearnedFilter();
+  const breaking   = applyBreakingLearner();
+  return { ...irrelevant, ...breaking };
+}
+
 // For the Hidden view: what the filter has learned so far
 function learningSummary() {
   const model = train();
@@ -187,4 +247,5 @@ function learningSummary() {
   return { flaggedCount: model.nFlagged, terms, minFlagged: MIN_FLAGGED_DOCS };
 }
 
-module.exports = { applyLearnedFilter, learningSummary, tokenize, train, match };
+module.exports = { applyLearnedFilter, applyBreakingLearner, applyAllLearners, learningSummary,
+                   tokenize, train, trainBreaking, match };

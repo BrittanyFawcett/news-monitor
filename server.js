@@ -11,13 +11,13 @@ const { fetchCurrentsAPI }  = require('./fetchers/currents');
 const { fetchGNews }        = require('./fetchers/gnews');
 const { isBreaking, isRelevant, detectCompanies, detectIndustry, detectEventType, isLeadershipEvent } = require('./fetchers/classify');
 const { decodeEntities }    = require('./fetchers/decode');
-const { applyLearnedFilter, learningSummary } = require('./learn');
+const { applyAllLearners, learningSummary } = require('./learn');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
 const INDUSTRIES = [
-  'big_banks', 'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
+  'big_banks', 'travel', 'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
   'neobanks', 'brokerage', 'mortgage_lending', 'digital_assets', 'open_banking',
 ];
 
@@ -26,6 +26,15 @@ const EVENT_TYPES = ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'pr
 // Event types that qualify an article for Breaking News (product_launch and
 // fundraising excluded — too noisy; fundraising breaking articles surface via ma/ipo)
 const BREAKING_EVENT_TYPES = ['ma', 'ipo', 'earnings', 'leadership', 'regulatory'];
+
+// An article is in Breaking News when:
+//   you flagged it as breaking (breaking_user = 1), or
+//   you haven't switched it off (breaking_user != -1) AND either the keyword
+//   rules marked it (is_breaking + a high-impact event type) or the learner
+//   promoted it because it resembles articles you flagged (breaking_auto = 1)
+const BREAKING_SQL = `(COALESCE(breaking_user, 0) = 1 OR (COALESCE(breaking_user, 0) != -1 AND (
+  (is_breaking = 1 AND event_type IN (${BREAKING_EVENT_TYPES.map(t => `'${t}'`).join(',')}))
+  OR COALESCE(breaking_auto, 0) = 1)))`;
 
 // Order in which event types are displayed within each industry section
 const EVENT_TYPE_ORDER = ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory'];
@@ -59,8 +68,8 @@ async function runAllFetchers() {
   // Press releases: BusinessWire, PR Newswire, GlobeNewswire
   await fetchPressReleases();
 
-  // Hide newly fetched articles that resemble ones you've flagged
-  try { applyLearnedFilter(); } catch (err) { console.error('[Learn]', err.message); }
+  // Hide / promote newly fetched articles that resemble ones you've flagged
+  try { applyAllLearners(); } catch (err) { console.error('[Learn]', err.message); }
 
   lastFetchTime = new Date().toISOString();
   isFetching = false;
@@ -129,12 +138,11 @@ app.get('/api/feed', (req, res) => {
   const { conds: base, params: baseParams } = buildBaseConditions(req);
 
   try {
-    // ── Breaking news — uses is_breaking flag set at fetch time ────────────
+    // ── Breaking news — keyword rules + your flags + learned promotions ────
     let breaking = [];
     if (req.query.hidden !== '1') {
-      const bConds  = [...base, 'is_breaking = 1',
-        `event_type IN (${BREAKING_EVENT_TYPES.map(() => '?').join(',')})`];
-      const bParams = [...baseParams, ...BREAKING_EVENT_TYPES];
+      const bConds  = [...base, BREAKING_SQL];
+      const bParams = [...baseParams];
 
       if (activeEventTypes) applyEventTypeFilter(activeEventTypes, bConds, bParams);
 
@@ -144,7 +152,7 @@ app.get('/api/feed', (req, res) => {
       }
 
       breaking = db.prepare(
-        `SELECT * FROM articles ${makeWhere(bConds)} ORDER BY published_at DESC`
+        `SELECT *, 1 AS in_breaking FROM articles ${makeWhere(bConds)} ORDER BY published_at DESC`
       ).all(...bParams);
     }
 
@@ -164,7 +172,7 @@ app.get('/api/feed', (req, res) => {
       total += indTotal;
 
       const articles = db.prepare(
-        `SELECT * FROM articles ${where} ORDER BY published_at DESC LIMIT 200`
+        `SELECT *, ${BREAKING_SQL} AS in_breaking FROM articles ${where} ORDER BY published_at DESC LIMIT 200`
       ).all(...iParams);
 
       const groups  = {};
@@ -240,7 +248,7 @@ app.get('/api/articles', (req, res) => {
   try {
     const total    = db.prepare(`SELECT COUNT(*) as n FROM articles ${where}`).get(...params).n;
     const articles = db.prepare(
-      `SELECT * FROM articles ${where} ORDER BY published_at DESC LIMIT ? OFFSET ?`
+      `SELECT *, ${BREAKING_SQL} AS in_breaking FROM articles ${where} ORDER BY published_at DESC LIMIT ? OFFSET ?`
     ).all(...params, parseInt(limit), parseInt(offset));
 
     res.json({ articles, total, offset: parseInt(offset) });
@@ -277,9 +285,46 @@ app.post('/api/articles/:id/flag', (req, res) => {
       db.prepare(`UPDATE articles SET irrelevant = 0, user_kept = ?, hidden_reason = NULL,
                   flagged_at = NULL WHERE id = ?`).run(keep, id);
     }
-    const { hidden, restored } = applyLearnedFilter();
+    const { hidden, restored } = applyAllLearners();
     res.json({ ok: true, id, irrelevant: flag,
                autoHidden: hidden.filter(x => x !== id), autoRestored: restored });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/articles/:id/breaking — flag as breaking, or switch off ─────
+// Body: { breaking: true | false }
+app.post('/api/articles/:id/breaking', (req, res) => {
+  const id   = parseInt(req.params.id);
+  const flag = req.body?.breaking === true;
+  const row  = db.prepare(
+    `SELECT id, breaking_user, breaking_auto, is_breaking, event_type FROM articles WHERE id = ?`
+  ).get(id);
+  if (!row) return res.status(404).json({ error: 'Article not found' });
+
+  try {
+    if (flag) {
+      db.prepare(`UPDATE articles SET breaking_user = 1 WHERE id = ?`).run(id);
+    } else {
+      // Undoing your own flag goes back to "no decision" — unless the keyword
+      // rules or the learner would still put it in Breaking, in which case
+      // switching it off records an explicit "not breaking" (-1), which the
+      // learner also uses as evidence.
+      const byRule = row.is_breaking === 1 && BREAKING_EVENT_TYPES.includes(row.event_type);
+      const byAuto = row.breaking_auto === 1;
+      const value  = (row.breaking_user === 1 && !byRule && !byAuto) ? 0 : -1;
+      db.prepare(`UPDATE articles SET breaking_user = ? WHERE id = ?`).run(value, id);
+    }
+    let { promoted, demoted } = applyAllLearners();
+    // If you switched it off but the learner re-promoted it, make "off" stick
+    if (!flag && db.prepare(`SELECT breaking_auto FROM articles WHERE id = ?`).get(id).breaking_auto === 1) {
+      db.prepare(`UPDATE articles SET breaking_user = -1, breaking_auto = 0, breaking_reason = NULL WHERE id = ?`).run(id);
+      ({ promoted, demoted } = applyAllLearners());
+    }
+    res.json({ ok: true, id, breaking: flag,
+               autoPromoted: promoted.filter(x => x !== id), autoDemoted: demoted.filter(x => x !== id) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -520,7 +565,7 @@ app.listen(PORT, () => {
   removeVisaFalsePositives();
   removePlaidFalsePositives();
   backfillBreaking();
-  try { applyLearnedFilter(); } catch (err) { console.error('[Learn]', err.message); }
+  try { applyAllLearners(); } catch (err) { console.error('[Learn]', err.message); }
   const count = db.prepare('SELECT COUNT(*) as n FROM articles').get().n;
   if (count === 0) {
     console.log('Empty database — running initial fetch...');

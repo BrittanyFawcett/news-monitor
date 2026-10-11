@@ -8,6 +8,7 @@ const PRESS_RELEASE_SOURCES = new Set([
 ]);
 
 const QUERIES = {
+  travel:           '"American Airlines" OR "Delta Air Lines" OR "United Airlines" OR "Southwest Airlines" OR "Alaska Airlines" OR JetBlue OR "Spirit Airlines" OR "Frontier Airlines" OR Uber OR Lyft OR Marriott OR Hilton OR Hyatt OR IHG OR "Choice Hotels"',
   big_banks:        '"Citigroup" OR "Citibank" OR "Wells Fargo" OR "Bank of America" OR "PNC Financial" OR "PNC Bank" OR "Truist" OR "U.S. Bancorp" OR "U.S. Bank"',
   big_tech_fintech: '"Apple Pay" OR "Apple Card" OR "Amazon Pay" OR "Google Pay" OR "Google Wallet" OR "Meta Pay" OR "WhatsApp Pay" OR "Microsoft fintech"',
   payments:         'PayPal OR Venmo OR Stripe OR "Cash App" OR Adyen OR "Bilt Rewards"',
