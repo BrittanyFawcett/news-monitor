@@ -23,7 +23,8 @@ const ALL_COMPANIES = [
   { name: 'American Express', terms: ['american express', 'amex'] },
   { name: 'Discover',         terms: ['discover financial', 'discover card'] },
   // Data & Open Banking
-  { name: 'Plaid',            terms: ['plaid'] },
+  // Bare 'Plaid' is confirmed by context in detectPlaidByContext() — it's also a fabric pattern
+  { name: 'Plaid',            terms: ['plaid inc', 'plaid technologies'] },
   { name: 'Finicity',         terms: ['finicity'] },
   { name: 'Yodlee',           terms: ['yodlee'] },
   { name: 'MX',               terms: ['mx technologies'] },
@@ -161,7 +162,7 @@ const TIER1_NAMES = [
   'paypal', 'stripe', 'block', 'square', 'bilt', 'adyen',
   'fidelity', 'schwab', 'vanguard', 'blackrock', 'robinhood',
   'mastercard', 'american express', 'amex', 'discover',
-  'plaid', 'finicity', 'yodlee',
+  'finicity', 'yodlee',   // 'plaid' removed: matched fashion articles (fabric pattern)
   'coinbase', 'kraken', 'crypto.com', 'binance',
   'xrp', 'solana', 'chainlink', 'uniswap', 'polkadot', 'arbitrum',
   'okx', 'bitfinex', 'bybit', 'microstrategy', 'grayscale', 'galaxy digital',
@@ -239,7 +240,6 @@ const AMBIGUOUS_SINGLE_TERMS = new Set([
   'stripe',    // also: a stripe pattern
   'affirm',    // also: to affirm/assert
   'chime',     // also: a bell sound
-  'plaid',     // also: a fabric pattern
   'bilt',      // uncommon but ambiguous
   'sofi',      // also: a name suffix
   'kraken',    // also: mythological creature
@@ -294,6 +294,46 @@ function detectVisaByContext(lowerText) {
   return false;
 }
 
+// ── Plaid context detection ───────────────────────────────────────────────
+// Confirmation-based: a bare "Plaid" counts as the company only when it is
+// capitalized, a fintech term appears near it, and no clothing/fashion term
+// appears near it. "Plaid skirts are back" → no; "Plaid raises $400M" → yes.
+const PLAID_FINTECH_TERMS = [
+  'fintech', 'open banking', 'open finance', 'bank', 'banking', 'financial',
+  'data', 'api', 'account', 'payment', 'pay by bank', 'lending', 'credit',
+  'fraud', 'identity', 'verification', 'aggregat', 'cfpb', '1033',
+  'valuation', 'funding', 'raises', 'raised', 'investors', 'ipo', 'startup',
+  'ceo', 'cfo', 'coo', 'cto', 'chief', 'executive', 'hires', 'staff', 'employees',
+  'headcount', 'layoffs', 'acquisition', 'acquires', 'partnership', 'partners with',
+  'jpmorgan', 'chase', 'wells fargo', 'venmo', 'visa', 'mastercard',
+  'finicity', 'yodlee', 'mx technologies', 'stripe', 'robinhood', 'chime', 'sofi',
+];
+const PLAID_FASHION_RE = new RegExp('\\b(' + [
+  // Only words that don't also appear in Plaid company news. Left out on purpose:
+  // suit (lawsuit), check (fraud check), collection (data collection), deal,
+  // sale, trends (spending trends), patterns (spending patterns), designers.
+  'fashion', 'runway', 'outfits?', 'wardrobe', 'style[sd]?', 'styling', 'stylish',
+  'skirts?', 'shirts?', 'flannels?', 'jackets?', 'blazers?', 'coats?', 'scarf', 'scarves',
+  'dress(?:es)?', 'trousers', 'pants', 'tartan', 'gingham', 'prints?', 'fabrics?',
+  'textiles?', 'wool', 'knit(?:s|wear)?', 'sweaters?', 'menswear', 'womenswear',
+  'wear', 'pajamas', 'blankets?', 'decor', 'vogue', 'burberry',
+].join('|') + ')\\b', 'i');
+const PLAID_CONTEXT_WINDOW = 150;
+
+function detectPlaidByContext(origText) {
+  const re = /\bPlaid\b/g;   // capitalized only; lowercase "plaid" is the pattern
+  let m;
+  while ((m = re.exec(origText)) !== null) {
+    const start   = Math.max(0, m.index - PLAID_CONTEXT_WINDOW);
+    const end     = Math.min(origText.length, m.index + PLAID_CONTEXT_WINDOW);
+    const context = origText.slice(start, end);
+    const lc      = context.toLowerCase();
+    if (PLAID_FASHION_RE.test(context)) continue;
+    if (PLAID_FINTECH_TERMS.some(t => lc.replace(/plaid/g, '').includes(t))) return true;
+  }
+  return false;
+}
+
 function detectCompanies(title, description) {
   const lowerText = `${title || ''} ${description || ''}`.toLowerCase();
   const origText  = `${title || ''} ${description || ''}`;
@@ -315,6 +355,7 @@ function detectCompanies(title, description) {
       return ch >= 'A' && ch <= 'Z';
     })) found.add(name);
   }
+  if (!found.has('Plaid') && detectPlaidByContext(origText)) found.add('Plaid');
   if (!found.has('Visa') && detectVisaByContext(lowerText)) found.add('Visa');
   // Exclusion check applies regardless of which path added Visa
   if (found.has('Visa') && VISA_EXCLUSION_TERMS.some(t => lowerText.includes(t))) found.delete('Visa');

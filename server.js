@@ -463,6 +463,37 @@ function removeVisaFalsePositives() {
   if (n > 0) console.log(`[DB] Removed Visa false positives from ${n} articles`);
 }
 
+// ── Remove Plaid fashion false positives saved before the context check ───
+// Re-runs detection on every article that mentions "plaid". If it no longer
+// detects Plaid the company, Plaid is dropped from its tags; if nothing else
+// makes it relevant, the article is deleted (same rule a new fetch applies).
+function removePlaidFalsePositives() {
+  const rows = db.prepare(
+    `SELECT id, title, description, companies, industry FROM articles
+     WHERE LOWER(title) LIKE '%plaid%' OR LOWER(COALESCE(description, '')) LIKE '%plaid%'`
+  ).all();
+  if (!rows.length) return;
+  const update = db.prepare(`UPDATE articles SET companies = ?, industry = ? WHERE id = ?`);
+  const del    = db.prepare(`DELETE FROM articles WHERE id = ?`);
+  const tx = db.transaction(() => {
+    let updated = 0, deleted = 0;
+    for (const r of rows) {
+      const redetected = detectCompanies(r.title, r.description);
+      if (redetected.includes('Plaid')) continue;
+      if (!isRelevant(r.title, r.description, redetected)) { del.run(r.id); deleted++; continue; }
+      const stored = (r.companies || '').split(',').map(c => c.trim()).filter(Boolean);
+      if (stored.includes('Plaid')) {
+        const newIndustry = detectIndustry(redetected, r.title, r.description) || r.industry;
+        update.run(redetected.join(',') || null, newIndustry, r.id);
+        updated++;
+      }
+    }
+    return { updated, deleted };
+  });
+  const { updated, deleted } = tx();
+  if (updated || deleted) console.log(`[DB] Plaid false positives: removed ${deleted}, re-tagged ${updated}`);
+}
+
 // ── Backfill is_breaking for articles fetched before this field existed ────
 function backfillBreaking() {
   const rows = db.prepare('SELECT id, title, description FROM articles WHERE is_breaking IS NULL').all();
@@ -487,6 +518,7 @@ app.listen(PORT, () => {
   reclassifyIPOEventType();
   recomputeLeadershipTags();
   removeVisaFalsePositives();
+  removePlaidFalsePositives();
   backfillBreaking();
   try { applyLearnedFilter(); } catch (err) { console.error('[Learn]', err.message); }
   const count = db.prepare('SELECT COUNT(*) as n FROM articles').get().n;
