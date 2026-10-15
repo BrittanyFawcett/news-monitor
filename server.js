@@ -565,6 +565,24 @@ function removePlaidFalsePositives() {
   if (updated || deleted) console.log(`[DB] Plaid false positives: removed ${deleted}, re-tagged ${updated}`);
 }
 
+// ── Fill in region for articles saved before regions existed ──────────────
+function backfillRegions() {
+  const { detectRegion } = require('./fetchers/region');
+  const rows = db.prepare(
+    `SELECT id, title, description, companies, source_type FROM articles WHERE region IS NULL`
+  ).all();
+  if (!rows.length) return;
+  const update = db.prepare(`UPDATE articles SET region = ?, region_basis = ? WHERE id = ?`);
+  db.transaction(() => {
+    for (const r of rows) {
+      const g = detectRegion({ title: r.title, description: r.description,
+                               companies: r.companies, sourceType: r.source_type });
+      update.run(g ? g.region : '', g ? g.basis : null, r.id);
+    }
+  })();
+  console.log(`[DB] Added regions to ${rows.length} articles`);
+}
+
 // ── Backfill is_breaking for articles fetched before this field existed ────
 function backfillBreaking() {
   const rows = db.prepare('SELECT id, title, description FROM articles WHERE is_breaking IS NULL').all();
@@ -590,6 +608,7 @@ app.listen(PORT, () => {
   recomputeLeadershipTags();
   removeVisaFalsePositives();
   removePlaidFalsePositives();
+  backfillRegions();
   backfillBreaking();
   try { applyAllLearners(); } catch (err) { console.error('[Learn]', err.message); }
   const count = db.prepare('SELECT COUNT(*) as n FROM articles').get().n;

@@ -661,6 +661,15 @@ body {
 }
 .toast button:hover { text-decoration: underline; }
 .card-source { font-weight: 600; color: var(--text-dim); }
+.card-region {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10.5px; font-weight: 600; color: var(--text-dim); white-space: nowrap;
+}
+.card-region::before { content: '·'; margin-right: 2px; color: var(--text-muted); font-weight: 400; }
+.card-region svg { flex-shrink: 0; }
+.card-region-hq { font-weight: 400; color: var(--text-muted); font-style: italic; cursor: help; }
+.breaking-card-footer .card-region { color: #b0003a; }
+.breaking-card-footer .card-region-hq { color: #c06080; }
 
 .card-image {
   flex-shrink: 0; width: 68px; height: 50px;

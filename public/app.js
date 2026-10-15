@@ -220,6 +220,20 @@ function cardActionsHtml(a) {
   return `<span class="card-actions">${breakingToggleHtml(a)}${flagToggleHtml(a)}</span>`;
 }
 
+// Region next to the source. When the story itself doesn't name a place, the
+// company's headquarters is shown instead — muted, with a note saying so.
+function regionHtml(a) {
+  if (!a.region) return '';
+  const hq    = a.region_basis === 'hq';
+  const first = (a.companies || '').split(',')[0];
+  const title = hq
+    ? `No location in the story — based on ${first ? escapeHtml(first) + '\'s' : 'the company\'s'} headquarters`
+    : 'Location named in the story';
+  return `<span class="card-region${hq ? ' card-region-hq' : ''}" title="${title}">` +
+    `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>` +
+    `${escapeHtml(a.region)}${hq ? ' (HQ)' : ''}</span>`;
+}
+
 function sectionCardHtml(a) {
   if (!a.url) return '';
   const desc = a.description
@@ -243,7 +257,7 @@ function sectionCardHtml(a) {
         ${desc}
         ${companyTagsHtml(a.companies)}
         <div class="card-footer">
-          <span class="card-source">${escapeHtml(a.source_name || '')}</span>
+          <span class="card-source">${escapeHtml(a.source_name || '')}</span>${regionHtml(a)}
           ${cardActionsHtml(a)}
         </div>
       </div>
@@ -274,7 +288,7 @@ function breakingCardHtml(a) {
         ${evtHtml}
         <div class="breaking-card-divider"></div>
         <div class="breaking-card-title">${escapeHtml(a.title)}</div>
-        <div class="breaking-card-footer"><span>${escapeHtml(a.source_name || '')}${timeStr}</span></div>
+        <div class="breaking-card-footer"><span>${escapeHtml(a.source_name || '')}${timeStr}</span>${regionHtml(a)}</div>
         <div class="breaking-card-actions">${cardActionsHtml(a)}</div>
       </div>
     </a>`;

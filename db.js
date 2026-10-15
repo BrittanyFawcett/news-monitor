@@ -1,5 +1,6 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const { detectRegion } = require('./fetchers/region');
 
 const db = new Database(path.join(__dirname, 'news.db'));
 
@@ -49,6 +50,10 @@ try { db.exec('CREATE INDEX IF NOT EXISTS idx_irrelevant ON articles(irrelevant)
 try { db.exec('ALTER TABLE articles ADD COLUMN breaking_user   INTEGER DEFAULT 0'); } catch {}
 try { db.exec('ALTER TABLE articles ADD COLUMN breaking_auto   INTEGER DEFAULT 0'); } catch {}
 try { db.exec('ALTER TABLE articles ADD COLUMN breaking_reason TEXT'); } catch {}
+// Story region (see fetchers/region.js). region_basis: 'story' = named in the
+// story, 'hq' = company headquarters fallback. '' region = none found.
+try { db.exec('ALTER TABLE articles ADD COLUMN region       TEXT'); } catch {}
+try { db.exec('ALTER TABLE articles ADD COLUMN region_basis TEXT'); } catch {}
 
 // Clear stale data if the DB still has old industry categories
 const OLD_INDUSTRIES = new Set(['tech', 'healthcare', 'finance', 'energy']);
@@ -81,8 +86,8 @@ const _checkTitle = db.prepare('SELECT 1 FROM articles WHERE title = ? LIMIT 1')
 const _insert     = db.prepare(`
   INSERT OR IGNORE INTO articles
     (title, description, url, source_name, source_type, industry, published_at,
-     author, image_url, event_type, companies, is_breaking)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     author, image_url, event_type, companies, is_breaking, region, region_basis)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
 function saveArticle(a) {
@@ -90,12 +95,15 @@ function saveArticle(a) {
   const url = normalizeUrl(a.url);
   if (_checkUrl.get(url)) return false;
   if (_checkTitle.get(a.title)) return false;
+  const r = detectRegion({ title: a.title, description: a.description,
+                          companies: a.companies, sourceType: a.source_type });
   try {
     _insert.run(
       a.title, a.description ?? null, url,
       a.source_name ?? null, a.source_type, a.industry,
       a.published_at ?? null, a.author ?? null, a.image_url ?? null,
-      a.event_type ?? null, a.companies ?? null, a.is_breaking ?? 0
+      a.event_type ?? null, a.companies ?? null, a.is_breaking ?? 0,
+      r ? r.region : '', r ? r.basis : null
     );
     return true;
   } catch {
