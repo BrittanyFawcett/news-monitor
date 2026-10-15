@@ -76,3 +76,17 @@ Every card also has a **Flag as breaking** toggle. It's on whenever the article 
 - **On** adds the article to Breaking News (tagged *Your flag*) and teaches the dashboard. Once two or more articles you flagged share distinctive terms, similar articles are promoted automatically (tagged *Learned*; hover for the matched terms). Same rules as the irrelevant filter in `learn.js`.
 - **Off** takes it out of Breaking News and stays off, even for articles the keyword rules flagged. Switched-off articles also count as evidence against those terms.
 - Both learners re-run after every toggle, after every fetch, and on startup. Hidden articles are never promoted.
+
+## Sources
+
+Polled **every 15 minutes** (no API quota): their feeds only hold the newest ~10–20 items, so the 2-hour cycle missed most releases.
+
+| Source | How | Notes |
+|---|---|---|
+| PR Newswire | RSS: All News Releases, Financial Services, Financial Technology, Airlines & Aviation | PRN's Banking, Travel and Crypto feeds had stopped updating (Aug–Sep 2026), so they're left out. Each feed logs a warning if its newest item is over a week old. |
+| GlobeNewswire | RSS: Financials, M&A, Earnings, Airlines, Hotels | |
+| Business Wire | Reads businesswire.com/newsroom pages (Latest, Professional Services, Technology, Travel, Transport, Retail) | No public RSS. English releases only, headline-only. If Business Wire refuses the server, the log says `[BW] … refused the request`. |
+| Associated Press | AP's official Flipboard feeds: Business & Finance, Technology | AP ended its own RSS in 2024. |
+| Company newsrooms | RSS from Apple, Google, Microsoft, Amazon, PayPal, Stripe, Kraken, PNC, Truist, United, Alaska Air, Hyatt | Big Tech posts are kept only if they mention payments/finance. Shown under the **Company Newsrooms** source filter. |
+
+Every **2 hours**: everything above plus NewsAPI, Currents, GNews, the per-industry RSS feeds, and SEC EDGAR 8-Ks.

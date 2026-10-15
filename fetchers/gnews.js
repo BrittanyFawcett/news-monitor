@@ -4,11 +4,12 @@ const { detectCompanies, detectEventType, detectIndustry, isRelevant, isBreaking
 const { decodeEntities } = require('./decode');
 
 const QUERIES = {
+  auto:             '"Ally Financial" OR "GM Financial" OR "Ford Credit" OR Carvana OR CarMax OR "auto loan"',
   travel:           '"American Airlines" OR "Delta Air Lines" OR "United Airlines" OR "Southwest Airlines" OR JetBlue OR Uber OR Lyft OR Marriott OR Hilton OR Hyatt',
-  big_banks:        'Citigroup OR Citibank OR "Wells Fargo" OR "Bank of America" OR "PNC Bank" OR Truist OR "U.S. Bancorp"',
+  big_banks:        'Citigroup OR Citibank OR "Wells Fargo" OR "Bank of America" OR "PNC Bank" OR Truist OR "U.S. Bancorp" OR "Capital One" OR Synchrony',
   big_tech_fintech: '"Apple Pay" OR "Apple Card" OR "Amazon Pay" OR "Google Pay" OR "Google Wallet" OR "Meta Pay"',
-  payments:         'PayPal OR Venmo OR Stripe OR "Cash App" OR Adyen OR Bilt',
-  brokerage:        'Fidelity OR Schwab OR Vanguard OR BlackRock OR Robinhood',
+  payments:         'PayPal OR Venmo OR Stripe OR "Cash App" OR Adyen OR Bilt OR Zelle OR Fiserv',
+  brokerage:        'Fidelity OR Schwab OR Vanguard OR BlackRock OR Robinhood OR "Morgan Stanley"',
   card_networks:    'Visa OR Mastercard OR "American Express" OR "Discover card"',
   open_banking:     'Plaid OR Finicity OR Yodlee OR "open banking" OR "open finance"',
   digital_assets:   'Coinbase OR Kraken OR "Crypto.com" OR Binance OR cryptocurrency',

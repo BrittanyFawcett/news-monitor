@@ -8,17 +8,18 @@ const PRESS_RELEASE_SOURCES = new Set([
 ]);
 
 const QUERIES = {
+  auto:             '"Ally Financial" OR "Ally Bank" OR "GM Financial" OR "Ford Credit" OR "Toyota Financial Services" OR "Santander Consumer" OR Carvana OR CarMax OR "auto loan" OR "auto lending"',
   travel:           '"American Airlines" OR "Delta Air Lines" OR "United Airlines" OR "Southwest Airlines" OR "Alaska Airlines" OR JetBlue OR "Spirit Airlines" OR "Frontier Airlines" OR Uber OR Lyft OR Marriott OR Hilton OR Hyatt OR IHG OR "Choice Hotels"',
-  big_banks:        '"Citigroup" OR "Citibank" OR "Wells Fargo" OR "Bank of America" OR "PNC Financial" OR "PNC Bank" OR "Truist" OR "U.S. Bancorp" OR "U.S. Bank"',
+  big_banks:        '"Citigroup" OR "Citibank" OR "Wells Fargo" OR "Bank of America" OR "PNC Financial" OR "PNC Bank" OR "Truist" OR "U.S. Bancorp" OR "U.S. Bank" OR "Capital One" OR Synchrony',
   big_tech_fintech: '"Apple Pay" OR "Apple Card" OR "Amazon Pay" OR "Google Pay" OR "Google Wallet" OR "Meta Pay" OR "WhatsApp Pay" OR "Microsoft fintech"',
-  payments:         'PayPal OR Venmo OR Stripe OR "Cash App" OR Adyen OR "Bilt Rewards"',
-  brokerage:        'Fidelity OR "Charles Schwab" OR Vanguard OR BlackRock OR Robinhood',
+  payments:         'PayPal OR Venmo OR Stripe OR "Cash App" OR Adyen OR "Bilt Rewards" OR Zelle OR Paze OR Fiserv',
+  brokerage:        'Fidelity OR "Charles Schwab" OR Vanguard OR BlackRock OR Robinhood OR "Morgan Stanley" OR "E*Trade"',
   card_networks:    'Visa OR Mastercard OR "American Express" OR "Discover card"',
   open_banking:     'Plaid OR Finicity OR Yodlee OR "MX Technologies" OR "open banking" OR "open finance"',
   digital_assets:   'Coinbase OR Kraken OR "Crypto.com" OR Binance OR cryptocurrency',
-  neobanks:         'Chime OR SoFi OR Revolut OR neobank',
+  neobanks:         'Chime OR SoFi OR Revolut OR neobank OR "Varo Bank" OR "Dave Inc" OR "Marcus by Goldman"',
   bnpl:             'Klarna OR Affirm OR Afterpay OR "buy now pay later" OR BNPL',
-  mortgage_lending: '"Rocket Mortgage" OR "Rocket Companies" OR LoanDepot OR "Better.com" OR "Better Mortgage"',
+  mortgage_lending: '"Rocket Mortgage" OR "Rocket Companies" OR LoanDepot OR "Better.com" OR "Better Mortgage" OR "United Wholesale Mortgage"',
   commerce:         'Shopify OR "embedded finance" OR "embedded banking" OR "Banking as a Service"',
 };
 

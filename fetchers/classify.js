@@ -1,3 +1,15 @@
+// Context words that confirm an ambiguous company name ("Ally", "Dave",
+// "Current", "Clover", "UWM"…) when they appear within CONTEXT_WINDOW chars.
+const FIN_CONTEXT_TERMS = [
+  'bank', 'banking', 'fintech', 'financial', 'lender', 'lending', 'loan', 'loans', 'deposits',
+  'savings', 'credit card', 'debit card', 'cardholders', 'customers', 'members', 'earnings',
+  'quarter', 'shares', 'stock', 'ceo', 'cfo', 'regulators', 'cfpb', 'occ', 'app',
+];
+const AUTO_CONTEXT_TERMS = [...FIN_CONTEXT_TERMS, 'auto', 'car', 'cars', 'vehicle', 'vehicles', 'dealer', 'dealers', 'dealership'];
+const NEOBANK_CONTEXT_TERMS = ['fintech', 'neobank', 'challenger bank', 'digital bank', 'banking app', 'mobile banking', 'debit card', 'cash advance', 'overdraft', 'members', 'nasdaq'];
+const MERCHANT_CONTEXT_TERMS = ['fiserv', 'merchant', 'merchants', 'point of sale', 'point-of-sale', 'pos', 'payments', 'small business', 'restaurants', 'checkout'];
+const MORTGAGE_CONTEXT_TERMS = ['mortgage', 'mortgages', 'lender', 'loans', 'broker', 'brokers', 'refinance', 'refinancing', 'ishbia', 'rocket', 'home loan', 'origination'];
+
 const ALL_COMPANIES = [
   // Big Tech Fintech
   { name: 'Apple',            terms: ['apple pay', 'apple card', 'apple wallet', 'apple cash', 'apple savings'] },
@@ -21,7 +33,7 @@ const ALL_COMPANIES = [
   { name: 'Visa',             terms: ['visa network', 'visa payment', 'visa inc', 'visa checkout', 'visa direct'] },
   { name: 'Mastercard',       terms: ['mastercard'] },
   { name: 'American Express', terms: ['american express', 'amex'] },
-  { name: 'Discover',         terms: ['discover financial', 'discover card'] },
+  { name: 'Discover',         terms: ['discover financial', 'discover card', 'discover network', 'discover global network', 'discover bank'] },
   // Data & Open Banking
   // Bare 'Plaid' is confirmed by context in detectPlaidByContext() — it's also a fabric pattern
   { name: 'Plaid',            terms: ['plaid inc', 'plaid technologies'] },
@@ -129,6 +141,60 @@ const ALL_COMPANIES = [
     patterns: [/\bIHG\b/, /\bInterContinental Hotels\b/i, /\bHoliday Inn\b/i] },
   { name: 'Choice Hotels', terms: [],
     patterns: [/\bChoice Hotels\b/i, /\bChoice Privileges\b/i] },
+
+  // ── Chase competitors added Oct 2026 ──
+  // Big Banks / card issuers
+  { name: 'Capital One', terms: [],
+    patterns: [/\bCapital One\b/],
+    excludes: ['capital one arena', 'capital one hall', 'capital one cafe', 'capital one café', 'capital one orange bowl', 'capital one jamfest'] },
+  { name: 'Synchrony', terms: [],
+    patterns: [/\bSynchrony(?: Financial| Bank)?\b/] },
+  // Auto lending (Chase Auto competitors)
+  { name: 'Ally', terms: [],
+    patterns: [/\bAlly (?:Financial|Bank|Invest|Auto|Home|Lending|Credit Card)\b/i],
+    contextPatterns: [/\bAlly\b/], contextTerms: AUTO_CONTEXT_TERMS },
+  { name: 'GM Financial', terms: [],
+    patterns: [/\bGM Financial\b/i, /\bGeneral Motors Financial\b/i] },
+  { name: 'Ford Credit', terms: [],
+    patterns: [/\bFord (?:Motor )?Credit\b/i] },
+  { name: 'Toyota Financial Services', terms: [],
+    patterns: [/\bToyota (?:Financial Services|Motor Credit)\b/i] },
+  { name: 'Santander Consumer', terms: [],
+    patterns: [/\bSantander Consumer\b/i, /\bChrysler Capital\b/i] },
+  { name: 'Carvana', terms: [],
+    patterns: [/\bCarvana\b/i] },
+  { name: 'CarMax', terms: [],
+    patterns: [/\bCarMax\b/i] },
+  // Brokerage & wealth
+  { name: 'Morgan Stanley', terms: [],
+    patterns: [/\bMorgan Stanley\b/i] },
+  { name: 'E*Trade', terms: [],
+    patterns: [/\bE\*?\s?TRADE\b/i, /\bE-Trade\b/i, /\bEtrade\b/i] },
+  // Payments
+  { name: 'Zelle', terms: [],
+    patterns: [/\bZelle\b/i, /\bEarly Warning Services\b/i] },
+  { name: 'Paze', terms: [],
+    patterns: [/\bPaze\b/] },
+  { name: 'Fiserv', terms: [],
+    patterns: [/\bFiserv\b/i, /\bClover (?:POS|Network|Capital|Flex|Station|Mini|merchants?)\b/i],
+    contextPatterns: [/\bClover\b/], contextTerms: MERCHANT_CONTEXT_TERMS },
+  // Mortgage
+  { name: 'UWM', terms: [],
+    patterns: [/\bUnited Wholesale Mortgage\b/i, /\bUWM Holdings\b/i],
+    contextPatterns: [/\bUWM\b/], contextTerms: MORTGAGE_CONTEXT_TERMS },
+  // Neobanks / digital deposit competitors
+  { name: 'Marcus', terms: [],
+    patterns: [/\bMarcus by Goldman(?: Sachs)?\b/i, /\bGoldman(?: Sachs)?['’]s? Marcus\b/i],
+    contextPatterns: [/\bMarcus\b/], contextTerms: ['goldman', 'savings', 'high-yield', 'deposits', 'consumer bank', 'personal loans'] },
+  { name: 'Varo', terms: [],
+    patterns: [/\bVaro (?:Bank|Money)\b/i],
+    contextPatterns: [/\bVaro\b/], contextTerms: NEOBANK_CONTEXT_TERMS.concat(['bank', 'charter']) },
+  { name: 'Dave', terms: [],
+    patterns: [/\bDave Inc\b/i, /\bDave(?:'s)? (?:app|ExtraCash|banking)\b/i],
+    contextPatterns: [/\bDave\b/], contextTerms: NEOBANK_CONTEXT_TERMS },
+  { name: 'Current', terms: [],
+    // "Current" is an everyday word; only the fintech context counts
+    contextPatterns: [/\bCurrent\b/], contextTerms: ['fintech', 'neobank', 'challenger bank', 'banking app', 'stuart sopp', 'current app', 'current card'] },
 ];
 
 // Words that confirm an ambiguous airline name ("Delta", "United", "Spirit"…)
@@ -148,14 +214,19 @@ const AIRLINE_CONTEXT_TERMS = [
 ];
 const AIRLINE_CONTEXT_WINDOW = 120;
 
-function matchesWithContext(origText, re) {
+function escapeRe(t) { return t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+// True when `re` matches and one of `terms` appears near the match. The
+// matched word itself is blanked out first, so "Dave" can't confirm itself
+// via a context term like "dave".
+function matchesWithContext(origText, re, terms = AIRLINE_CONTEXT_TERMS) {
   const g = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g');
   let m;
   while ((m = g.exec(origText)) !== null) {
     const start = Math.max(0, m.index - AIRLINE_CONTEXT_WINDOW);
     const end   = Math.min(origText.length, m.index + m[0].length + AIRLINE_CONTEXT_WINDOW);
-    const ctx   = origText.slice(start, end).toLowerCase();
-    if (AIRLINE_CONTEXT_TERMS.some(t => new RegExp(`\\b${t}\\b`).test(ctx))) return true;
+    const ctx   = (origText.slice(start, m.index) + ' ' + origText.slice(m.index + m[0].length, end)).toLowerCase();
+    if (terms.some(t => new RegExp(`\\b${escapeRe(t)}\\b`).test(ctx))) return true;
   }
   return false;
 }
@@ -166,18 +237,23 @@ const TRAVEL_COMPANIES = [
   'Uber', 'Lyft', 'Marriott', 'Hilton', 'Hyatt', 'IHG', 'Choice Hotels',
 ];
 
+const AUTO_COMPANIES = [
+  'Ally', 'GM Financial', 'Ford Credit', 'Toyota Financial Services', 'Santander Consumer', 'Carvana', 'CarMax',
+];
+
 const COMPANY_GROUPS = {
-  big_banks:        { label: 'Big Banks',            companies: ['Citi', 'Wells Fargo', 'Bank of America', 'PNC', 'Truist', 'U.S. Bank'] },
+  big_banks:        { label: 'Big Banks',            companies: ['Citi', 'Wells Fargo', 'Bank of America', 'PNC', 'Truist', 'U.S. Bank', 'Capital One', 'Synchrony'] },
   travel:           { label: 'Travel',               companies: TRAVEL_COMPANIES },
+  auto:             { label: 'Auto',                 companies: AUTO_COMPANIES },
   big_tech_fintech: { label: 'Big Tech',            companies: ['Apple', 'Amazon', 'Google', 'Microsoft', 'Meta'] },
-  payments:         { label: 'Payments',             companies: ['PayPal', 'Stripe', 'Block', 'Bilt', 'Adyen'] },
-  brokerage:        { label: 'Brokerage',            companies: ['Fidelity', 'Schwab', 'Vanguard', 'BlackRock', 'Robinhood'] },
+  payments:         { label: 'Payments',             companies: ['PayPal', 'Stripe', 'Block', 'Bilt', 'Adyen', 'Zelle', 'Paze', 'Fiserv'] },
+  brokerage:        { label: 'Brokerage',            companies: ['Fidelity', 'Schwab', 'Vanguard', 'BlackRock', 'Robinhood', 'Morgan Stanley', 'E*Trade'] },
   card_networks:    { label: 'Card Networks',        companies: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
   open_banking:     { label: 'Data & Open Banking', companies: ['Plaid', 'Finicity', 'Yodlee', 'MX'] },
   digital_assets:   { label: 'Digital Assets',        companies: ['Coinbase', 'Kraken', 'Crypto.com', 'Binance'] },
-  neobanks:         { label: 'Neobanks',             companies: ['Chime', 'SoFi', 'Revolut'] },
+  neobanks:         { label: 'Neobanks',             companies: ['Chime', 'SoFi', 'Revolut', 'Marcus', 'Varo', 'Dave', 'Current'] },
   bnpl:             { label: 'BNPL',                 companies: ['Klarna', 'Affirm', 'Afterpay'] },
-  mortgage_lending: { label: 'Mortgage & Lending',  companies: ['Rocket Mortgage', 'LoanDepot', 'Better.com'] },
+  mortgage_lending: { label: 'Mortgage & Lending',  companies: ['Rocket Mortgage', 'LoanDepot', 'Better.com', 'UWM'] },
   commerce:         { label: 'Commerce',             companies: ['Shopify'] },
 };
 
@@ -343,7 +419,7 @@ const VISA_FINANCIAL_TERMS = [
   'payment network', 'payment processing', 'card network', 'card payment',
   'mastercard', 'transaction', 'checkout', 'merchant', 'interchange',
   'tokenization', 'contactless', 'debit card', 'credit card', 'fintech',
-  'acquiring', 'issuing', 'point of sale', 'payment rail',
+  'acquiring', 'issuing', 'point of sale', 'payment rail', 'tap to pay', 'tap-to-pay',
 ];
 
 const VISA_EXCLUSION_TERMS = [
@@ -427,11 +503,11 @@ function detectCompanies(title, description) {
   const lowerText = `${title || ''} ${description || ''}`.toLowerCase();
   const origText  = `${title || ''} ${description || ''}`;
   const found = new Set();
-  for (const { name, terms, patterns, contextPatterns, excludes } of ALL_COMPANIES) {
-    if (patterns) {
+  for (const { name, terms, patterns, contextPatterns, contextTerms, excludes } of ALL_COMPANIES) {
+    if (patterns || contextPatterns) {
       if (excludes && excludes.some(x => lowerText.includes(x))) continue;
-      if (patterns.some(re => re.test(origText))) found.add(name);
-      else if (contextPatterns && contextPatterns.some(re => matchesWithContext(origText, re))) found.add(name);
+      if (patterns && patterns.some(re => re.test(origText))) found.add(name);
+      else if (contextPatterns && contextPatterns.some(re => matchesWithContext(origText, re, contextTerms))) found.add(name);
       continue;
     }
     if (terms.some(t => {
@@ -497,6 +573,10 @@ function isRelevant(title, description, companies) {
   // Already detected by our company extraction → always relevant
   if (companies.length > 0) return true;
 
+  // Auto-finance stories are in scope even without a tracked company
+  const lowerAll = `${title || ''} ${description || ''}`.toLowerCase();
+  if (AUTO_FINANCE_TERMS.some(t => lowerAll.includes(t))) return true;
+
   const text = `${title || ''} ${description || ''}`.toLowerCase();
 
   // Tier 1: direct company name substring match
@@ -531,9 +611,25 @@ const COMPANY_TO_INDUSTRY = {
   Citi: 'big_banks', 'Wells Fargo': 'big_banks', 'Bank of America': 'big_banks',
   PNC: 'big_banks', Truist: 'big_banks', 'U.S. Bank': 'big_banks',
   ...Object.fromEntries(TRAVEL_COMPANIES.map(c => [c, 'travel'])),
+  ...Object.fromEntries(AUTO_COMPANIES.map(c => [c, 'auto'])),
+  'Capital One': 'big_banks', Synchrony: 'big_banks',
+  'Morgan Stanley': 'brokerage', 'E*Trade': 'brokerage',
+  Zelle: 'payments', Paze: 'payments', Fiserv: 'payments',
+  UWM: 'mortgage_lending',
+  Marcus: 'neobanks', Varo: 'neobanks', Dave: 'neobanks', Current: 'neobanks',
 };
 
+// Auto-finance stories go to Auto whichever company they name, so a Capital
+// One or Chase auto-loan story lands next to Ally and the captive lenders.
+const AUTO_FINANCE_TERMS = [
+  'auto loan', 'auto-loan', 'car loan', 'auto lending', 'auto lender', 'auto finance',
+  'auto financing', 'vehicle financing', 'vehicle loan', 'auto delinquenc', 'subprime auto',
+  'auto refinanc', 'dealer financing', 'captive lender', 'auto abs', 'auto credit',
+];
+
 function detectIndustry(companies, title, description) {
+  const lower = `${title || ''} ${description || ''}`.toLowerCase();
+  if (AUTO_FINANCE_TERMS.some(t => lower.includes(t))) return 'auto';
   for (const co of companies) {
     if (COMPANY_TO_INDUSTRY[co]) return COMPANY_TO_INDUSTRY[co];
   }
@@ -556,7 +652,7 @@ function detectIndustry(companies, title, description) {
 }
 
 module.exports = {
-  ALL_COMPANIES, COMPANY_GROUPS, COMPANY_TO_INDUSTRY, EVENT_PATTERNS,
+  ALL_COMPANIES, COMPANY_GROUPS, COMPANY_TO_INDUSTRY, EVENT_PATTERNS, AUTO_FINANCE_TERMS,
   TIER1_NAMES, TIER2_KEYWORDS, BREAKING_TRIGGERS,
   detectCompanies, detectEventType, detectIndustry, isRelevant, isBreaking, isLeadershipEvent,
 };

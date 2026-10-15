@@ -28,6 +28,10 @@ const GLOBAL_FEEDS = [
   { url: 'https://seekingalpha.com/feed.xml',                                  name: 'Seeking Alpha' },
   { url: 'https://feeds.businessinsider.com/custom/all',                       name: 'Business Insider' },
   { url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories',         name: 'MarketWatch' },
+  // Associated Press — AP stopped its own RSS in 2024; these feeds are run by AP
+  // on its verified Flipboard account and link to apnews.com (checked 2026-10-15).
+  { url: 'https://flipboard.com/@associatedpress/business-and-finance-pbj3bpclz.rss', name: 'Associated Press' },
+  { url: 'https://flipboard.com/@associatedpress/technology-uvt65hdqz.rss',           name: 'Associated Press' },
 ];
 
 const FEEDS = {

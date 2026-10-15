@@ -28,6 +28,7 @@
   /* Industry accent colors */
   --c-big_banks:        #a04a00;
   --c-travel:           #0a6e8a;
+  --c-auto:             #3d5a1e;
   --c-big_tech_fintech: #003087;
   --c-card_networks:    #4a0080;
   --c-payments:         #005a00;
@@ -144,6 +145,7 @@ body {
 /* Per-industry active border colors */
 .filter-btn[data-value="big_banks"].active        { border-left-color: var(--c-big_banks); }
 .filter-btn[data-value="travel"].active           { border-left-color: var(--c-travel); }
+.filter-btn[data-value="auto"].active             { border-left-color: var(--c-auto); }
 .filter-btn[data-value="big_tech_fintech"].active { border-left-color: var(--c-big_tech_fintech); }
 .filter-btn[data-value="card_networks"].active    { border-left-color: var(--c-card_networks); }
 .filter-btn[data-value="payments"].active         { border-left-color: var(--c-payments); }
@@ -168,6 +170,7 @@ body {
 
 .dot-big_banks        { background: var(--c-big_banks); }
 .dot-travel           { background: var(--c-travel); }
+.dot-auto             { background: var(--c-auto); }
 .dot-big_tech_fintech { background: var(--c-big_tech_fintech); }
 .dot-card_networks    { background: var(--c-card_networks); }
 .dot-payments         { background: var(--c-payments); }
@@ -410,6 +413,7 @@ body {
 /* Per-industry full background bars */
 .industry-section[data-industry="big_banks"]        .industry-header { background: #a04a00; }
 .industry-section[data-industry="travel"]           .industry-header { background: #0a6e8a; }
+.industry-section[data-industry="auto"]             .industry-header { background: #3d5a1e; }
 .industry-section[data-industry="big_tech_fintech"] .industry-header { background: #003087; }
 .industry-section[data-industry="card_networks"]    .industry-header { background: #4a0080; }
 .industry-section[data-industry="payments"]         .industry-header { background: #005a00; }
@@ -467,6 +471,7 @@ body {
 /* Per-industry event label color */
 .industry-section[data-industry="big_banks"]        .event-group-label { color: #a04a00; }
 .industry-section[data-industry="travel"]           .event-group-label { color: #0a6e8a; }
+.industry-section[data-industry="auto"]             .event-group-label { color: #3d5a1e; }
 .industry-section[data-industry="big_tech_fintech"] .event-group-label { color: #003087; }
 .industry-section[data-industry="card_networks"]    .event-group-label { color: #4a0080; }
 .industry-section[data-industry="payments"]         .event-group-label { color: #005a00; }
@@ -519,7 +524,7 @@ body {
 }
 
 /* Source type badges */
-.badge-news, .badge-rss, .badge-filing, .badge-press_release {
+.badge-news, .badge-rss, .badge-filing, .badge-press_release, .badge-newsroom {
   background: #f4f5f7;
   color: #666677;
   border: 1px solid #dde1e7;
@@ -528,6 +533,7 @@ body {
 /* Industry badges (used in breaking section) */
 .badge-big_banks        { background: rgba(160,74,0,0.08); color: #a04a00; }
 .badge-travel           { background: rgba(10,110,138,0.08); color: #0a6e8a; }
+.badge-auto             { background: rgba(61,90,30,0.08); color: #3d5a1e; }
 .badge-big_tech_fintech { background: rgba(0,48,135,0.08); color: #003087; }
 .badge-card_networks    { background: rgba(74,0,128,0.08); color: #4a0080; }
 .badge-payments         { background: rgba(0,90,0,0.08); color: #005a00; }

@@ -38,6 +38,12 @@ const TRACKED = [
   { name: 'Marriott',        cik: '1048286', industry: 'travel'           },
   { name: 'Hilton',          cik: '1585689', industry: 'travel'           },
   { name: 'Hyatt',           cik: '1468174', industry: 'travel'           },
+  // Chase competitors — CIKs verified against SEC company_tickers.json (Oct 2026)
+  { name: 'Capital One',     cik: '927628',  industry: 'big_banks'        },
+  { name: 'Synchrony',       cik: '1601712', industry: 'big_banks'        },
+  { name: 'Ally',            cik: '40729',   industry: 'auto'             },
+  { name: 'Carvana',         cik: '1690820', industry: 'auto'             },
+  { name: 'Morgan Stanley',  cik: '895421',  industry: 'brokerage'        },
 ];
 
 // Map 8-K item numbers to event types

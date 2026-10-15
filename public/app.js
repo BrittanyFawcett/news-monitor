@@ -1,15 +1,16 @@
 /* ── Constants ──────────────────────────────────────────────────── */
 const ALL_INDUSTRIES = [
-  'big_banks', 'travel', 'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
+  'big_banks', 'travel', 'auto', 'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
   'neobanks', 'brokerage', 'mortgage_lending', 'digital_assets', 'open_banking',
 ];
 const ALL_EVENT_TYPES = ['ma', 'ipo', 'fundraising', 'earnings', 'partnerships', 'product_launch', 'leadership', 'regulatory', 'industry_news'];
-const ALL_SOURCES     = ['news', 'rss', 'filing', 'press_release'];
+const ALL_SOURCES     = ['news', 'rss', 'filing', 'press_release', 'newsroom'];
 const LIMIT           = 15;
 
 const INDUSTRY_LABELS = {
   big_banks:        'Big Banks',
   travel:           'Travel',
+  auto:             'Auto',
   big_tech_fintech: 'Big Tech',
   payments:         'Payments',
   brokerage:        'Brokerage & Asset Management',
@@ -36,20 +37,21 @@ const EVENT_TYPE_LABELS = {
 };
 
 const SOURCE_LABELS = {
-  news: 'News', rss: 'RSS', filing: 'SEC Filing', press_release: 'Press Release',
+  news: 'News', rss: 'RSS', filing: 'SEC Filing', press_release: 'Press Release', newsroom: 'Newsroom',
 };
 
 const COMPANY_GROUPS = {
-  big_banks:        { label: 'Big Banks',             companies: ['Citi', 'Wells Fargo', 'Bank of America', 'PNC', 'Truist', 'U.S. Bank'] },
+  big_banks:        { label: 'Big Banks',             companies: ['Citi', 'Wells Fargo', 'Bank of America', 'PNC', 'Truist', 'U.S. Bank', 'Capital One', 'Synchrony'] },
   travel:           { label: 'Travel',                companies: ['American Airlines', 'Delta', 'United Airlines', 'Southwest', 'Alaska Airlines', 'JetBlue', 'Hawaiian Airlines', 'Spirit Airlines', 'Frontier Airlines', 'Allegiant', 'Sun Country', 'Uber', 'Lyft', 'Marriott', 'Hilton', 'Hyatt', 'IHG', 'Choice Hotels'] },
+  auto:             { label: 'Auto',                  companies: ['Ally', 'GM Financial', 'Ford Credit', 'Toyota Financial Services', 'Santander Consumer', 'Carvana', 'CarMax'] },
   big_tech_fintech: { label: 'Big Tech',             companies: ['Apple', 'Amazon', 'Google', 'Microsoft', 'Meta'] },
   card_networks:    { label: 'Card Networks',         companies: ['Visa', 'Mastercard', 'American Express', 'Discover'] },
-  payments:         { label: 'Payments',              companies: ['PayPal', 'Stripe', 'Block', 'Bilt', 'Adyen'] },
+  payments:         { label: 'Payments',              companies: ['PayPal', 'Stripe', 'Block', 'Bilt', 'Adyen', 'Zelle', 'Paze', 'Fiserv'] },
   commerce:         { label: 'Commerce',              companies: ['Shopify'] },
   bnpl:             { label: 'BNPL',                  companies: ['Klarna', 'Affirm', 'Afterpay'] },
-  neobanks:         { label: 'Neobanks',              companies: ['Chime', 'SoFi', 'Revolut'] },
-  brokerage:        { label: 'Brokerage',             companies: ['Fidelity', 'Schwab', 'Vanguard', 'BlackRock', 'Robinhood'] },
-  mortgage_lending: { label: 'Mortgage & Lending',   companies: ['Rocket Mortgage', 'LoanDepot', 'Better.com'] },
+  neobanks:         { label: 'Neobanks',              companies: ['Chime', 'SoFi', 'Revolut', 'Marcus', 'Varo', 'Dave', 'Current'] },
+  brokerage:        { label: 'Brokerage',             companies: ['Fidelity', 'Schwab', 'Vanguard', 'BlackRock', 'Robinhood', 'Morgan Stanley', 'E*Trade'] },
+  mortgage_lending: { label: 'Mortgage & Lending',   companies: ['Rocket Mortgage', 'LoanDepot', 'Better.com', 'UWM'] },
   digital_assets:   { label: 'Digital Assets',         companies: ['Coinbase', 'Kraken', 'Crypto.com', 'Binance'] },
   open_banking:     { label: 'Data & Open Banking',  companies: ['Plaid', 'Finicity', 'Yodlee', 'MX'] },
 };
@@ -500,7 +502,7 @@ async function refreshStatus() {
     const hiddenEl = document.getElementById('cnt-hidden');
     if (hiddenEl) hiddenEl.textContent = ((data.flagged_count || 0) + (data.auto_hidden_count || 0)).toLocaleString();
 
-    const srcMap = { news: data.news_count, rss: data.rss_count, filing: data.filing_count, press_release: data.press_release_count };
+    const srcMap = { news: data.news_count, rss: data.rss_count, filing: data.filing_count, press_release: data.press_release_count, newsroom: data.newsroom_count };
     for (const [k, v] of Object.entries(srcMap)) {
       const el = document.getElementById(`cnt-${k}`);
       if (el) el.textContent = v?.toLocaleString() ?? '—';

@@ -7,6 +7,8 @@ const { fetchNewsAPI }      = require('./fetchers/newsapi');
 const { fetchRSSFeeds, fetchGlobalRSSFeeds } = require('./fetchers/rss');
 const { fetchEDGARFilings } = require('./fetchers/edgar');
 const { fetchPressReleases } = require('./fetchers/pressrelease');
+const { fetchBusinessWire }  = require('./fetchers/businesswire');
+const { fetchNewsrooms }     = require('./fetchers/newsrooms');
 const { fetchCurrentsAPI }  = require('./fetchers/currents');
 const { fetchGNews }        = require('./fetchers/gnews');
 const { isBreaking, isRelevant, detectCompanies, detectIndustry, detectEventType, isLeadershipEvent } = require('./fetchers/classify');
@@ -17,7 +19,7 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 
 const INDUSTRIES = [
-  'big_banks', 'travel', 'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
+  'big_banks', 'travel', 'auto', 'big_tech_fintech', 'card_networks', 'payments', 'commerce', 'bnpl',
   'neobanks', 'brokerage', 'mortgage_lending', 'digital_assets', 'open_banking',
 ];
 
@@ -65,8 +67,10 @@ async function runAllFetchers() {
   // Company-specific: SEC EDGAR 8-K filings (CIK-based, runs once)
   await fetchEDGARFilings();
 
-  // Press releases: BusinessWire, PR Newswire, GlobeNewswire
+  // Press wires + company newsrooms (also polled every 15 min by runWireFetchers)
   await fetchPressReleases();
+  await fetchBusinessWire();
+  await fetchNewsrooms();
 
   // Hide / promote newly fetched articles that resemble ones you've flagged
   try { applyAllLearners(); } catch (err) { console.error('[Learn]', err.message); }
@@ -74,6 +78,26 @@ async function runAllFetchers() {
   lastFetchTime = new Date().toISOString();
   isFetching = false;
   console.log('[Fetch] Complete\n');
+}
+
+// ── Free sources, polled every 15 minutes ─────────────────────────────────
+// Press-wire and newsroom feeds only hold their newest ~10-20 items, so the
+// 2-hour cycle missed most releases. These sources cost no API quota.
+let isFetchingWires = false;
+async function runWireFetchers() {
+  if (isFetching || isFetchingWires) return;
+  isFetchingWires = true;
+  try {
+    await fetchPressReleases();
+    await fetchBusinessWire();
+    await fetchNewsrooms();
+    await fetchGlobalRSSFeeds();   // includes AP
+    applyAllLearners();
+  } catch (err) {
+    console.error('[Wires]', err.message);
+  } finally {
+    isFetchingWires = false;
+  }
 }
 
 // ── Shared query builder ───────────────────────────────────────────────────
@@ -356,6 +380,7 @@ app.get('/api/status', (_req, res) => {
       COUNT(CASE WHEN source_type = 'press_release' THEN 1 END) AS press_release_count,
       COUNT(CASE WHEN source_type = 'currents'      THEN 1 END) AS currents_count,
       COUNT(CASE WHEN source_type = 'gnews'         THEN 1 END) AS gnews_count,
+      COUNT(CASE WHEN source_type = 'newsroom'      THEN 1 END) AS newsroom_count,
       ${industryCols},
       ${eventCols}
     FROM articles
@@ -378,6 +403,7 @@ app.get('/api/status', (_req, res) => {
 
 // ── Cron: every 2 hours ────────────────────────────────────────────────────
 cron.schedule('0 */2 * * *', runAllFetchers);
+cron.schedule('*/15 * * * *', runWireFetchers);
 
 // ── Decode HTML entities in existing articles ──────────────────────────────
 function cleanupEntityEncoding() {
